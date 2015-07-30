@@ -1,0 +1,65 @@
+package hazelcast.cert.com.process;
+
+import com.hazelcast.client.HazelcastClient;
+import com.hazelcast.config.Config;
+import com.hazelcast.config.ExecutorConfig;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.IExecutorService;
+import com.hazelcast.logging.ILogger;
+import com.hazelcast.logging.Logger;
+import hazelcast.cert.com.domain.Transaction;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+
+/**
+ * This implementation assumes cluster in Client-Server setup. Other
+ * implementations may not use Client-Server, create HazelcastInstance
+ * accordingly. It uses <b>IExecutorService</b> to execute business
+ * rules on the relevant cluster nodes where the data is stored.
+ * @author rahul
+ *
+ */
+public class FraudDetectionImpl extends FraudDetection {
+
+	private final static ILogger log = Logger.getLogger(FraudDetectionImpl.class);
+	private static HazelcastInstance HAZELCAST;
+	private final static int EXECUTOR_POOL_SIZE = 2;
+	private final static String EXECUTOR_POOL_NAME = "FraudDetectionService";
+	
+	//Initializing Client with defaults, but add more specific configurations later.
+	static {
+		HAZELCAST = HazelcastClient.newHazelcastClient();
+	}
+	
+	@Override
+	protected void startFraudDetection() {
+		Config config = new Config();
+		ExecutorConfig eConfig = config.getExecutorConfig(EXECUTOR_POOL_NAME);
+		eConfig.setPoolSize(EXECUTOR_POOL_SIZE).setName(EXECUTOR_POOL_NAME);
+		IExecutorService service = HAZELCAST.getExecutorService(EXECUTOR_POOL_NAME);
+		
+		while(true) {
+			try {
+				Transaction txn = getNextTxn();
+				Future<Boolean> future = service.submitToKeyOwner(new FraudDetectionTask(txn), getClusterKey(txn));
+				log.info("Fraud transaction Credit Card ID:"+txn.getCreditCardNumber()+": "+future.get());
+				
+				getTPSCounter().incrementAndGet();
+			} catch (InterruptedException e) {
+				log.severe(e);
+			} catch (ExecutionException e) {
+				log.severe(e);
+			} 
+		}
+	}
+
+	private String getClusterKey(Transaction txn) {
+		return txn.getCreditCardNumber();
+	}
+	
+	@Override
+	protected void warmup() {
+
+	}
+}
