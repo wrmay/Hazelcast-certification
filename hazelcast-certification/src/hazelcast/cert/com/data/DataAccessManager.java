@@ -1,67 +1,46 @@
 package hazelcast.cert.com.data;
 
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.IMap;
+import com.hazelcast.logging.ILogger;
+import com.hazelcast.logging.Logger;
 import hazelcast.cert.com.domain.Transaction;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author rahul
- *
- */
-public interface DataAccessManager {
-	
-	/**
-	 * Deletes all transactions for this credit card including 
-	 * historical data 
-	 * @param txn is the identification of the credit card 
-	 * Credit Card ID number in this case
-	 * @return true or false as the status of delete operation
-	 */
-	public boolean delete(Transaction txn);
-	
-	/**
-	 * Deletes all records from the provided list, including 
-	 * historical data of each of the credit cards used in the 
-	 * list
-	 * @param txns all transactions that need to be deleted
-	 * @return true or false as the status of deleteAll operation
-	 */
-	public boolean deleteAll(List<Transaction> txns);
+public class DataAccessManager {
 
-	/**
-	 * Deletes all records in the list for the provided CreditCard Id
-	 * @param txns all transactions that need to be deleted
-	 * @return true or false as the status of deleteAll operation
-	 */
-	public boolean deleteAll(String creditCardID, List<Transaction> txns);
-	
-	/**
-	 * Retrieves all historical transactions for this credit card ID
-	 * @param id identification of the credit card used 
-	 * in this transaction
-	 * @return list of historic transactions of this credit card
-	 */
-	public List<Transaction> getHistoricalTransactions(String id);
-	
-	/**
-	 * 
-	 * @param currentTxn
-	 * @return
-	 */
-	public List<Transaction> updateAndGet(Transaction currentTxn);
-	
-	/**
-	 * 
-	 * @param txns
-	 * @return
-	 */
-	public void set(String creditCardID, List<Transaction> txns);
-	
-	/**
-	 * 
-	 * @param data
-	 */
-	public void setAll(Map<?, ?> data);
-	
+	private final static ILogger log = Logger.getLogger(DataAccessManager.class);
+
+	private HazelcastInstance hazelcast;
+
+	private static final String HAZELCAST_MAP_NAME = "CreditCardCache";
+
+	public void setHazelcastInstance(HazelcastInstance hazelcast) {
+		this.hazelcast = hazelcast;
+	}
+
+	public List<Transaction> updateAndGet(Transaction currentTxn) {
+
+		IMap<String, List<Transaction>> map = hazelcast.getMap(HAZELCAST_MAP_NAME);
+		List<Transaction> allTxns = map.get(currentTxn.getCreditCardNumber());
+		if(allTxns == null) {
+			allTxns = new ArrayList<>();
+		}
+		allTxns.add(currentTxn);
+		map.set(currentTxn.getCreditCardNumber(), allTxns);
+		return allTxns;
+	}
+
+	public void set(String creditCardID, List<Transaction> txns) {
+		IMap<String, List<Transaction>> map = hazelcast.getMap(HAZELCAST_MAP_NAME);
+		map.set(creditCardID, txns);
+	}
+
+	public void setAll(Map<?, ?> data) {
+		hazelcast.getMap(HAZELCAST_MAP_NAME).putAll(data);
+	}
+
 }

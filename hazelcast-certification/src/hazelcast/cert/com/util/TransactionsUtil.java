@@ -21,22 +21,37 @@ public class TransactionsUtil {
 	 *            Credit Card number for which the transactions to be created
 	 * @return
 	 */
-	public static Transaction createCreditCardTransaction(String creditCardNumber, int code) {
+	public static String createCreditCardTransaction(String creditCardNumber, int code) {
 
-		Transaction txn = new Transaction();
-		String countryCode = generateCountryCode();
-		txn.setCreditCardNumber(creditCardNumber);
-		txn.setTimeStamp(generateTimeStamp());
-		txn.setCountryCode(countryCode);
-		txn.setResponseCode(generateResponseCode(code));
-		txn.setTxnAmt(generateTxnAmount());
-		// Currency is same as CountryCode
-		txn.setTxnCurrency(countryCode);
-		txn.setMerchantType(generateMerchantType());
-		txn.setTxnCity(generateCityCode());
-		txn.setTxnCode(generateTxnCode(code));
+//		Transaction txn = new Transaction();
+//		String countryCode = generateCountryCode();
+//		txn.setCreditCardNumber(creditCardNumber);
+//		txn.setTimeStamp(generateTimeStamp());
+//		txn.setCountryCode(countryCode);
+//		txn.setResponseCode(generateResponseCode(code));
+//		txn.setTxnAmt(generateTxnAmount());
+//		// Currency is same as CountryCode
+//		txn.setTxnCurrency(countryCode);
+//		txn.setMerchantType(generateMerchantType());
+//		txn.setTxnCity(generateCityCode());
+//		txn.setTxnCode(generateTxnCode(code));
 
-		return txn;
+		StringBuffer txn = new StringBuffer();
+		String countryCode= generateCountryCode();
+
+		txn.append(creditCardNumber);
+		txn.append("," + generateTimeStamp());
+		txn.append("," + countryCode);
+		txn.append("," + generateResponseCode(code));
+		txn.append("," + generateTxnAmount());
+		//Currency is same as CountryCode
+		txn.append("," + countryCode);
+		txn.append("," + generateMerchantType());
+		txn.append("," + generateCityCode());
+		txn.append("," + generateTxnCode(code));
+
+
+		return txn.toString();
 	}
 
 	/**
@@ -95,12 +110,12 @@ public class TransactionsUtil {
 	}
 
 	// last 90 days
-	private static String generateTimeStamp() {
+	private static long generateTimeStamp() {
 		long offset = Timestamp.valueOf("2013-01-01 00:00:00").getTime();
 		long end = Timestamp.valueOf("2013-04-01 00:00:00").getTime();
 		long diff = end - offset + 1;
 		Timestamp rand = new Timestamp(offset + (long) (Math.random() * diff));
-		return rand.toString();
+		return rand.getTime();//toString();
 	}
 
 	private static String generateTxnCode(int temp) {

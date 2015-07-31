@@ -11,7 +11,7 @@ public class Transaction implements Serializable {
 	private static final long serialVersionUID = 7567524872106840493L;
 
 	private String creditCardNumber;
-	private String timeStamp;
+	private long timeStamp;
 	private String countryCode;
 	private String responseCode;
 	private String txnAmount;
@@ -28,12 +28,12 @@ public class Transaction implements Serializable {
 		this.creditCardNumber = credit_card_number;
 	}
 
-	public String getTimeStamp() {
+	public long getTimeStamp() {
 		return timeStamp;
 	}
 
-	public void setTimeStamp(String sk_title) {
-		this.timeStamp = sk_title;
+	public void setTimeStamp(long timeStamp) {
+		this.timeStamp = timeStamp;
 	}
 
 	public String getCountryCode() {
@@ -95,13 +95,21 @@ public class Transaction implements Serializable {
 	public String toString() {
 		StringBuffer sb = new StringBuffer();
 		sb.append(creditCardNumber);
+		sb.append(",");
 		sb.append(timeStamp);
+		sb.append(",");
 		sb.append(countryCode);
+		sb.append(",");
 		sb.append(responseCode);
+		sb.append(",");
 		sb.append(txnAmount);
+		sb.append(",");
 		sb.append(countryCode);
+		sb.append(",");
 		sb.append(merchantType);
+		sb.append(",");
 		sb.append(txnCity);
+		sb.append(",");
 		sb.append(txnCode);
 		
 		return sb.toString();

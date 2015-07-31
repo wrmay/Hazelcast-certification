@@ -42,15 +42,19 @@ public class FraudDetectionImpl extends FraudDetection {
 		while(true) {
 			try {
 				Transaction txn = getNextTxn();
-				Future<Boolean> future = service.submitToKeyOwner(new FraudDetectionTask(txn), getClusterKey(txn));
-				log.info("Fraud transaction Credit Card ID:"+txn.getCreditCardNumber()+": "+future.get());
-				
-				getTPSCounter().incrementAndGet();
+				if(txn != null) {
+					Future<Boolean> future = service.submitToKeyOwner(new FraudDetectionTask(txn), getClusterKey(txn));
+					log.info("Fraud transaction Credit Card ID:" + txn.getCreditCardNumber() + ": " + future.get());
+
+					getTPSCounter().incrementAndGet();
+				}
 			} catch (InterruptedException e) {
 				log.severe(e);
 			} catch (ExecutionException e) {
-				log.severe(e);
-			} 
+				log.severe("ExecutionException", e);
+			} catch (ArrayIndexOutOfBoundsException e) {
+				log.info("Bad String received... discarding.");
+			}
 		}
 	}
 

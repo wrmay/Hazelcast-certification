@@ -23,7 +23,7 @@ public class RuleEngine {
 		this.historicalTxns = historicalTxns;
 		detectionResult = false;
 
-		dateTime = new DateTime(Long.parseLong(currentTxn.getTimeStamp()));
+		dateTime = new DateTime(currentTxn.getTimeStamp());
 	}
 
 	public void executeRules() {
@@ -228,7 +228,7 @@ public class RuleEngine {
 		dateTimeLocal = dateTimeLocal.minusHours(1);
 		int n_txn_amt = 0;
 		for (Transaction txn : historicalTxns) {
-			DateTime historicalDateTime = DateTime.parse(txn.getTimeStamp());
+			DateTime historicalDateTime = new DateTime(txn.getTimeStamp());
 			if (historicalDateTime.isAfter(dateTimeLocal))
 				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
 		}
@@ -245,7 +245,7 @@ public class RuleEngine {
 		DateTime dateTimeLocal = new DateTime(dateTime.toDateTime());
 		dateTimeLocal = dateTimeLocal.minusHours(5);
 		for (Transaction txn : historicalTxns) {
-			DateTime historicalDT = DateTime.parse(txn.getTimeStamp());
+			DateTime historicalDT = new DateTime(txn.getTimeStamp());
 			if (historicalDT.isAfter(dateTimeLocal))
 				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
 		}
@@ -262,7 +262,7 @@ public class RuleEngine {
 		DateTime dateTimeLocal = new DateTime(dateTime.toDateTime());
 		dateTimeLocal = dateTimeLocal.minusHours(2);
 		for (Transaction txn : historicalTxns) {
-			DateTime historicalDT = DateTime.parse(txn.getTimeStamp());
+			DateTime historicalDT = new DateTime(txn.getTimeStamp());
 			if (historicalDT.isAfter(dateTimeLocal))
 				count++;
 		}
@@ -279,7 +279,7 @@ public class RuleEngine {
 		DateTime dateTimeLocal = new DateTime(dateTime.toDateTime());
 		dateTimeLocal = dateTimeLocal.minusHours(3);
 		for (Transaction txn : historicalTxns) {
-			DateTime txn_time = DateTime.parse(txn.getTimeStamp());
+			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal) && "3344".equals(currentTxn.getTxnCode())) {
 				count++;
 				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
@@ -298,7 +298,7 @@ public class RuleEngine {
 		DateTime dateTimeLocal = new DateTime(dateTime.toDateTime());
 		for (Transaction txn : historicalTxns) {
 			dateTimeLocal = dateTimeLocal.minusHours(8);
-			DateTime txn_time = DateTime.parse(txn.getTimeStamp());
+			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal)
 					&& "0011".equals(currentTxn.getMerchantType())
 					&& ("011".equals(currentTxn.getTxnCurrency()))) {
@@ -321,7 +321,7 @@ public class RuleEngine {
 		DateTime dateTimeLocal = new DateTime(dateTime.toDateTime());
 		for (Transaction txn : historicalTxns) {
 			dateTimeLocal = dateTimeLocal.minusDays(1);
-			DateTime txn_time = DateTime.parse(txn.getTimeStamp());
+			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal)) {
 				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
 			}
@@ -338,7 +338,7 @@ public class RuleEngine {
 		DateTime dateTimeLocal = new DateTime(dateTime.toDateTime());
 		for (Transaction txn : historicalTxns) {
 			dateTimeLocal = dateTimeLocal.minusDays(1);
-			DateTime txn_time = DateTime.parse(txn.getTimeStamp());
+			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal) && "3333".equals(txn.getTxnCode())
 					&& "2222".equals(txn.getMerchantType())) {
 				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
@@ -355,7 +355,7 @@ public class RuleEngine {
 		DateTime dateTimeLocal = new DateTime(dateTime.toDateTime());
 		for (Transaction txn : historicalTxns) {
 			dateTimeLocal = dateTimeLocal.minusDays(1);
-			DateTime txn_time = DateTime.parse(txn.getTimeStamp());
+			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal)) {
 				count++;
 			}
@@ -372,7 +372,7 @@ public class RuleEngine {
 		DateTime dateTimeLocal = new DateTime(dateTime.toDateTime());
 		for (Transaction txn : historicalTxns) {
 			dateTimeLocal = dateTimeLocal.minusDays(1);
-			DateTime txn_time = DateTime.parse(txn.getTimeStamp());
+			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal) && "3344".equals(currentTxn.getTxnCode())) {
 				count++;
 				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
@@ -391,7 +391,7 @@ public class RuleEngine {
 
 		for (Transaction txn : historicalTxns) {
 			dateTimeLocal = dateTimeLocal.minusDays(1);
-			DateTime txn_time = DateTime.parse(txn.getTimeStamp());
+			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal)
 					&& "0011".equals(currentTxn.getMerchantType())
 					&& ("011".equals(currentTxn.getTxnCurrency()))) {
@@ -414,7 +414,7 @@ public class RuleEngine {
 		DateTime dateTimeLocal = new DateTime(dateTime.toDateTime());
 		for (Transaction txn : historicalTxns) {
 			dateTimeLocal = dateTimeLocal.minusDays(10);
-			DateTime txn_time = DateTime.parse(txn.getTimeStamp());
+			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal)) {
 				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
 			}
@@ -431,7 +431,7 @@ public class RuleEngine {
 		DateTime dateTimeLocal = new DateTime(dateTime.toDateTime());
 		for (Transaction txn : historicalTxns) {
 			dateTimeLocal = dateTimeLocal.minusDays(11);
-			DateTime txn_time = DateTime.parse(txn.getTimeStamp());
+			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal) && "3333".equals(txn.getTxnCode())
 					&& "2222".equals(txn.getMerchantType())) {
 				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
@@ -448,7 +448,7 @@ public class RuleEngine {
 		DateTime dateTimeLocal = new DateTime(dateTime.toDateTime());
 		for (Transaction txn : historicalTxns) {
 			dateTimeLocal = dateTimeLocal.minusDays(12);
-			DateTime txn_time = DateTime.parse(txn.getTimeStamp());
+			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal)) {
 				count++;
 			}
@@ -465,7 +465,7 @@ public class RuleEngine {
 		DateTime dateTimeLocal = new DateTime(dateTime.toDateTime());
 		for (Transaction txn : historicalTxns) {
 			dateTimeLocal = dateTimeLocal.minusDays(13);
-			DateTime txn_time = DateTime.parse(txn.getTimeStamp());
+			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal) && "3344".equals(currentTxn.getTxnCode())) {
 				count++;
 				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
@@ -483,7 +483,7 @@ public class RuleEngine {
 		DateTime dateTimeLocal = new DateTime(dateTime.toDateTime());
 		for (Transaction txn : historicalTxns) {
 			dateTimeLocal = dateTimeLocal.minusDays(14);
-			DateTime txn_time = DateTime.parse(txn.getTimeStamp());
+			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal)
 					&& "0011".equals(currentTxn.getMerchantType())
 					&& ("011".equals(currentTxn.getTxnCurrency()))) {
@@ -507,7 +507,7 @@ public class RuleEngine {
 		DateTime dateTimeLocal = new DateTime(dateTime.toDateTime());
 		for (Transaction txn : historicalTxns) {
 			dateTimeLocal = dateTimeLocal.minusDays(60);
-			DateTime txn_time = DateTime.parse(txn.getTimeStamp());
+			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal)) {
 				count++;
 				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
@@ -526,7 +526,7 @@ public class RuleEngine {
 		DateTime dateTimeLocal = new DateTime(dateTime.toDateTime());
 		for (Transaction txn : historicalTxns) {
 			dateTimeLocal = dateTimeLocal.minusDays(70);
-			DateTime txn_time = DateTime.parse(txn.getTimeStamp());
+			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal)) {
 				count++;
 				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
@@ -545,7 +545,7 @@ public class RuleEngine {
 		DateTime dateTimeLocal = new DateTime(dateTime.toDateTime());
 		for (Transaction txn : historicalTxns) {
 			dateTimeLocal = dateTimeLocal.minusDays(70);
-			DateTime txn_time = DateTime.parse(txn.getTimeStamp());
+			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal)) {
 				count++;
 				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
@@ -564,7 +564,7 @@ public class RuleEngine {
 		DateTime dateTimeLocal = new DateTime(dateTime.toDateTime());
 		for (Transaction txn : historicalTxns) {
 			dateTimeLocal = dateTimeLocal.minusDays(90);
-			DateTime txn_time = DateTime.parse(txn.getTimeStamp());
+			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal)) {
 				count++;
 				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
@@ -583,7 +583,7 @@ public class RuleEngine {
 		DateTime dateTimeLocal = new DateTime(dateTime.toDateTime());
 		for (Transaction txn : historicalTxns) {
 			dateTimeLocal = dateTimeLocal.minusDays(90);
-			DateTime txn_time = DateTime.parse(txn.getTimeStamp());
+			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal)) {
 				count++;
 				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
@@ -600,7 +600,7 @@ public class RuleEngine {
 		DateTime dateTimeLocal = new DateTime(dateTime.toDateTime());
 		for (Transaction txn : historicalTxns) {
 			dateTimeLocal = dateTimeLocal.minusDays(10);
-			DateTime txn_time = DateTime.parse(txn.getTimeStamp());
+			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal) && "001".equals(txn.getCountryCode())
 					&& Integer.parseInt(txn.getTxnAmt()) > 10000
 					&& "002".equals(currentTxn.getCountryCode())
@@ -618,7 +618,7 @@ public class RuleEngine {
 
 		for (Transaction txn : historicalTxns) {
 			dateTimeLocal = dateTimeLocal.minusDays(10);
-			DateTime txn_time = DateTime.parse(txn.getTimeStamp());
+			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal) && (!"001".equals(txn.getCountryCode()))
 					&& Integer.parseInt(txn.getTxnAmt()) > 10000
 					&& "002".equals(currentTxn.getCountryCode())
@@ -632,13 +632,15 @@ public class RuleEngine {
 	private void rule43()
 			throws ParseException {
 
-		DateTime dateTimeLocal = new DateTime(dateTime.toDateTime());
-		if (Integer.parseInt(historicalTxns.get(1).getTxnAmt()) <= 100
-				&& Integer.parseInt(currentTxn.getTxnAmt()) >= 10000) {
-			dateTimeLocal = dateTimeLocal.minusMinutes(10);
-			DateTime txn_time = DateTime.parse(currentTxn.getTimeStamp());
-			if (txn_time.isAfter(dateTimeLocal)) {
-				detectionResult = true;
+		if(historicalTxns.size() > 1) {
+			DateTime dateTimeLocal = new DateTime(dateTime.toDateTime());
+			if (Integer.parseInt(historicalTxns.get(1).getTxnAmt()) <= 100
+					&& Integer.parseInt(currentTxn.getTxnAmt()) >= 10000) {
+				dateTimeLocal = dateTimeLocal.minusMinutes(10);
+				DateTime txn_time = new DateTime(currentTxn.getTimeStamp());
+				if (txn_time.isAfter(dateTimeLocal)) {
+					detectionResult = true;
+				}
 			}
 		}
 	}
@@ -649,7 +651,7 @@ public class RuleEngine {
 		DateTime dateTimeLocal = new DateTime(dateTime.toDateTime());
 		for (Transaction txn : historicalTxns) {
 			dateTimeLocal = dateTimeLocal.minusHours(10);
-			DateTime txn_time = DateTime.parse(txn.getTimeStamp());
+			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal)
 					&& (2 > Integer.parseInt(txn.getCountryCode()) && Integer
 							.parseInt(currentTxn.getTxnAmt()) > 10000)) {
@@ -667,7 +669,7 @@ public class RuleEngine {
 		DateTime dateTimeLocal = new DateTime(dateTime.toDateTime());
 		for (Transaction txn : historicalTxns) {
 			dateTimeLocal = dateTimeLocal.minusDays(1);
-			DateTime txn_time = DateTime.parse(txn.getTimeStamp());
+			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal) && "0022".equals(txn.getMerchantType())) {
 				count++;
 			}
@@ -687,7 +689,7 @@ public class RuleEngine {
 		DateTime dateTimeLocal = new DateTime(dateTime.toDateTime());
 		for (Transaction txn : historicalTxns) {
 			dateTimeLocal = dateTimeLocal.minusDays(50);
-			DateTime txn_time = DateTime.parse(txn.getTimeStamp());
+			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal) && Integer.parseInt(txn.getTxnCode()) > 5
 					&& Integer.parseInt(currentTxn.getTxnAmt()) > 20000) {
 				detectionResult = true;
@@ -701,7 +703,7 @@ public class RuleEngine {
 		historicalTxns.remove(currentTxn);
 		int count = 0;
 		for (Transaction txn : historicalTxns) {
-			DateTime txn_time = DateTime.parse(txn.getTimeStamp());
+			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			int hourOfDay = txn_time.getHourOfDay();
 			if (hourOfDay > 0 && hourOfDay < 4) {
 				count++;
@@ -722,7 +724,7 @@ public class RuleEngine {
 		DateTime dateTimeLocal = new DateTime(dateTime.toDateTime());
 		for (Transaction txn : historicalTxns) {
 			dateTimeLocal = dateTimeLocal.minusDays(80);
-			DateTime txn_time = DateTime.parse(txn.getTimeStamp());
+			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal)
 					&& ("200".equals(txn.getCountryCode()) || "201".equals(txn
 							.getCountryCode()))) {
@@ -750,7 +752,7 @@ public class RuleEngine {
 
 		for (Transaction txn : historicalTxns) {
 			dateTimeLocal = dateTimeLocal.minusDays(1);
-			DateTime txn_time = DateTime.parse(txn.getTimeStamp());
+			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal) && "0022".equals(txn.getMerchantType())
 					&& "0001".equals(txn.getTxnCode())) {
 				count++;
@@ -771,7 +773,7 @@ public class RuleEngine {
 		DateTime dateTimeLocal = new DateTime(dateTime.toDateTime());
 		for (Transaction txn : historicalTxns) {
 			dateTimeLocal = dateTimeLocal.minusDays(10);
-			DateTime txn_time = DateTime.parse(txn.getTimeStamp());
+			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal) && "0022".equals(txn.getMerchantType())
 					&& "0001".equals(txn.getTxnCode())) {
 				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());

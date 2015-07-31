@@ -23,8 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class TransactionsGenerator implements Runnable {
  
 	private final static ILogger log = Logger.getLogger(TransactionsGenerator.class);
-	
-	private String CHECKSUM = "@CAFEBABE";
+
     private final static String ADDRESS = "127.0.0.1";
     
     private final static int PORT = 8511;
@@ -145,7 +144,8 @@ public class TransactionsGenerator implements Runnable {
  
     private void write(SelectionKey key) throws IOException{
         SocketChannel channel = (SocketChannel) key.channel();
-        byte[] byteBuff = addParityChecksum(getNextTransaction()).getBytes();
+        String nextTxn = getNextTransaction();
+        byte[] byteBuff = addParityChecksum(nextTxn).getBytes();
         ByteBuffer outBuf = ByteBuffer.wrap(byteBuff);
         while(outBuf.hasRemaining()) {
         	channel.write(outBuf);
@@ -158,7 +158,8 @@ public class TransactionsGenerator implements Runnable {
     }
     
     private String addParityChecksum(String rawTxn) {
-    	return rawTxn+CHECKSUM;
+        String CHECKSUM = "@CAFEBABE";
+        return rawTxn+ CHECKSUM;
     }
     
     private void closeConnection(){
@@ -226,20 +227,6 @@ public class TransactionsGenerator implements Runnable {
     private String getNextTransaction() {
     	int counter = getNextCounter();
 		String creditCardNumber = TransactionsUtil.generateCreditCardNumber(counter);
-//		StringBuffer txn = new StringBuffer();
-//		String countryCode= generateCountryCode();
-//		
-//		txn.append(creditCardNumber);
-//		txn.append("," + generateTimeStamp());
-//		txn.append("," + countryCode);
-//		txn.append("," + generateResponseCode(counter));
-//		txn.append("," + generateTxnAmount());
-//		//Currency is same as CountryCode
-//		txn.append("," + countryCode);
-//		txn.append("," + generateMerchantType());
-//		txn.append("," + generateCityCode());
-//		txn.append("," + generateTxnCode());
-		
     	return TransactionsUtil.createCreditCardTransaction(creditCardNumber, counter).toString();
     } 
 }

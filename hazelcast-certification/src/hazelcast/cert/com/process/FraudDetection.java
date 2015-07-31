@@ -92,21 +92,17 @@ public abstract class FraudDetection {
 		return prepareTransaction(txnQueue.take());
 	}
 
-	protected Transaction prepareTransaction(String txnString) {
+	protected Transaction prepareTransaction(String txnString) throws RuntimeException {
 		Transaction txn = new Transaction();
-		try { 
-			String[] cName = txnString.split(",");
-			txn.setCreditCardNumber(cName[0]);
-			txn.setTimeStamp(cName[1].substring(0, 19));
-			txn.setCountryCode(cName[2]);
-			txn.setResponseCode(cName[3]);
-			txn.setTxnAmt(cName[4]);
-			txn.setMerchantType(cName[6]);
-			txn.setTxnCity(cName[7]);
-			txn.setTxnCode(cName[8]);
-		} catch (Exception e) {
-			log.info("Bad String "+txnString);
-		}
+		String[] cName = txnString.split(",");
+		txn.setCreditCardNumber(cName[0]);
+		txn.setTimeStamp(Long.parseLong(cName[1]));//.substring(0, 19));
+		txn.setCountryCode(cName[2]);
+		txn.setResponseCode(cName[3]);
+		txn.setTxnAmt(cName[4]);
+		txn.setMerchantType(cName[6]);
+		txn.setTxnCity(cName[7]);
+		txn.setTxnCode(cName[8]);
 		return txn;
 	}
 

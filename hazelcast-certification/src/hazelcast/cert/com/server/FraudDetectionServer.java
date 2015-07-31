@@ -63,6 +63,10 @@ public class FraudDetectionServer {
 		}.start();
 	}
 
+	private void tryChannelSocketConnection(SocketChannel channel) {
+
+	}
+
 	private void run() {
 		SocketChannel channel;
 		try {
@@ -71,6 +75,7 @@ public class FraudDetectionServer {
 			channel.configureBlocking(false);
 			channel.register(selector, SelectionKey.OP_CONNECT);
 
+			//tryChannelSocketConnection(channel);
 			channel.connect(new InetSocketAddress(URL, PORT));
 
 			log.info("Connecting to TransactionsGenerator at " + URL + "@"
@@ -247,13 +252,6 @@ public class FraudDetectionServer {
 			log.warning("Default ShowCacheStatistics used");
 		}
 		System.setProperty("ShowCacheStatistics", temp);
-		
-		temp = properties.getProperty("DataAccessManager");
-		if (temp == null) {
-			log.severe("Missing DataAccessManager. Exiting...");
-			System.exit(0);
-		}
-		System.setProperty("DataAccessManager", temp);
 	}
 
 	private void bindQueue() {
