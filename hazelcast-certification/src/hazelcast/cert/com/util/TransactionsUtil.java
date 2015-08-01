@@ -19,36 +19,31 @@ public class TransactionsUtil {
 	 * 
 	 * @param creditCardNumber
 	 *            Credit Card number for which the transactions to be created
-	 * @return
+	 * @param code Transaction Code which is
+	 * @return concatenated Transaction String made of all variables separated by comma (,)
 	 */
-	public static String createCreditCardTransaction(String creditCardNumber, int code) {
-
-//		Transaction txn = new Transaction();
-//		String countryCode = generateCountryCode();
-//		txn.setCreditCardNumber(creditCardNumber);
-//		txn.setTimeStamp(generateTimeStamp());
-//		txn.setCountryCode(countryCode);
-//		txn.setResponseCode(generateResponseCode(code));
-//		txn.setTxnAmt(generateTxnAmount());
-//		// Currency is same as CountryCode
-//		txn.setTxnCurrency(countryCode);
-//		txn.setMerchantType(generateMerchantType());
-//		txn.setTxnCity(generateCityCode());
-//		txn.setTxnCode(generateTxnCode(code));
+	public static String createAndGetCreditCardTransaction(String creditCardNumber, int code) {
 
 		StringBuffer txn = new StringBuffer();
 		String countryCode= generateCountryCode();
 
-		txn.append(creditCardNumber);
-		txn.append("," + generateTimeStamp());
-		txn.append("," + countryCode);
-		txn.append("," + generateResponseCode(code));
-		txn.append("," + generateTxnAmount());
+		txn.append(creditCardNumber)
+				.append(",").append(generateTimeStamp())
+				.append(",").append(countryCode)
+				.append(",").append(generateResponseCode(code))
+				.append(",").append(generateTxnAmount())
+				.append(",").append(countryCode)
+				.append(",").append(generateMerchantType())
+				.append(",").append(generateCityCode())
+				.append(",").append(generateTxnCode(code));
+		//txn.append("," + countryCode);
+		//txn.append("," + generateResponseCode(code));
+		//txn.append("," + generateTxnAmount());
 		//Currency is same as CountryCode
-		txn.append("," + countryCode);
-		txn.append("," + generateMerchantType());
-		txn.append("," + generateCityCode());
-		txn.append("," + generateTxnCode(code));
+		//txn.append("," + countryCode);
+		//txn.append("," + generateMerchantType());
+		//txn.append("," + generateCityCode());
+		//txn.append("," + generateTxnCode(code));
 
 
 		return txn.toString();
@@ -61,9 +56,9 @@ public class TransactionsUtil {
 	 *            Credit Card number for which the transactions to be created
 	 * @param txnCount
 	 *            number of historical transactions to create
-	 * @return
+	 * @return List of transactions for a credit card
 	 */
-	public static List<Transaction> createCreditCardTransactions(
+	public static List<Transaction> createAndGetCreditCardTransactions(
 			String creditCardNumber, int txnCount) {
 		List<Transaction> transactions = new ArrayList<Transaction>();
 		for (int j = 0; j < txnCount; j++) {
@@ -88,7 +83,7 @@ public class TransactionsUtil {
 
 	// card number : 14-bits, 00000001, 000~30000000, totally 30 Million cards
 	public static String generateCreditCardNumber(int id) {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		buffer.append("000000");
 		if (id < 10)
 			buffer.append("0000000" + id);
@@ -154,12 +149,12 @@ public class TransactionsUtil {
 
 	// 0001-0500
 	private static String generateMerchantType() {
-		int merchT = merchantTypeRandom.nextInt(500);
-		if (merchT < 10)
-			return "000" + merchT;
-		if (merchT > 10 && merchT < 100)
-			return "00" + merchT;
-		return String.valueOf("0" + merchT);
+		int merchantType = merchantTypeRandom.nextInt(500);
+		if (merchantType < 10)
+			return "000" + merchantType;
+		if (merchantType > 10 && merchantType < 100)
+			return "00" + merchantType;
+		return String.valueOf("0" + merchantType);
 	}
 
 	// 00001-10000

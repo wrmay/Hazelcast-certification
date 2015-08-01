@@ -24,7 +24,7 @@ public class FraudDetectionImpl extends FraudDetection {
 
 	private final static ILogger log = Logger.getLogger(FraudDetectionImpl.class);
 	private static HazelcastInstance HAZELCAST;
-	private final static int EXECUTOR_POOL_SIZE = 2;
+	private final static int EXECUTOR_POOL_SIZE = 4;
 	private final static String EXECUTOR_POOL_NAME = "FraudDetectionService";
 	
 	//Initializing Client with defaults, but add more specific configurations later.
@@ -39,12 +39,13 @@ public class FraudDetectionImpl extends FraudDetection {
 		eConfig.setPoolSize(EXECUTOR_POOL_SIZE).setName(EXECUTOR_POOL_NAME);
 		IExecutorService service = HAZELCAST.getExecutorService(EXECUTOR_POOL_NAME);
 		
-		while(true) {
+		while(!Thread.interrupted()) {
 			try {
 				Transaction txn = getNextTxn();
 				if(txn != null) {
 					Future<Boolean> future = service.submitToKeyOwner(new FraudDetectionTask(txn), getClusterKey(txn));
-					log.info("Fraud transaction Credit Card ID:" + txn.getCreditCardNumber() + ": " + future.get());
+					//log.info("Fraud transaction Credit Card ID:" + txn.getCreditCardNumber() + ": " + future.get());
+					future.get();
 
 					getTPSCounter().incrementAndGet();
 				}
@@ -62,8 +63,4 @@ public class FraudDetectionImpl extends FraudDetection {
 		return txn.getCreditCardNumber();
 	}
 	
-	@Override
-	protected void warmup() {
-
-	}
 }

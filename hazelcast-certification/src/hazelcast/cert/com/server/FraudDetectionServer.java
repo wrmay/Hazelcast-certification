@@ -8,6 +8,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -15,19 +16,20 @@ import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 public class FraudDetectionServer {
 
 	private final static ILogger log = Logger.getLogger(FraudDetectionServer.class);
 	private Selector selector;
-	private String CHECKSUM = "@CAFEBABE";
 	private int PORT;
 	private String URL;
 	private BlockingQueue<String> txnQueue;
 	private int queueCapacity;
-	private String FRAUD_DETECTION_IMPL_PROVIDER;
+	private SocketChannel channel;
 
-	private final static int DEFAUT_QUEUE_CAPACITY = 10000;
+	private String FRAUD_DETECTION_IMPL_PROVIDER;
+	private final static int DEFAULT_QUEUE_CAPACITY = 10000;
 
 	public FraudDetectionServer() {
 		loadProperties();
@@ -63,26 +65,51 @@ public class FraudDetectionServer {
 		}.start();
 	}
 
-	private void tryChannelSocketConnection(SocketChannel channel) {
+	private void tryChannelSocketConnection() throws IOException {
+		boolean connected;
+		while (!Thread.interrupted()) {
+			connected = connect(new InetSocketAddress(URL, PORT));
+			if (connected) {
+				log.info("Connections Successful...");
+				return;
+			}
+			try {
+				TimeUnit.SECONDS.sleep(3);
+			} catch (InterruptedException e1) {
+				log.severe(e1);
+			}
+		}
+	}
 
+	private boolean connect(InetSocketAddress address) {
+		try {
+			channel = SocketChannel.open();
+			Socket socket = channel.socket();
+			socket.setKeepAlive(true);
+			socket.setReuseAddress(true);
+			channel.socket().connect(address);
+			channel.configureBlocking(false);
+			return true;
+		} catch (Exception e) {
+			if(channel != null) {
+				try {
+					channel.close();
+				} catch (IOException e1) {
+					log.severe(e1);
+				}
+			}
+			log.warning("Remote node TransactionGenerator not available. Retry in 3 seconds...");
+		}
+		return false;
 	}
 
 	private void run() {
-		SocketChannel channel;
 		try {
+			tryChannelSocketConnection();
 			selector = Selector.open();
-			channel = SocketChannel.open();
-			channel.configureBlocking(false);
-			channel.register(selector, SelectionKey.OP_CONNECT);
-
-			//tryChannelSocketConnection(channel);
-			channel.connect(new InetSocketAddress(URL, PORT));
-
-			log.info("Connecting to TransactionsGenerator at " + URL + "@"
-					+ PORT);
-
+			channel.register(selector, SelectionKey.OP_READ);
 			while (!Thread.interrupted()) {
-				selector.select(10000);
+				selector.selectNow();
 				Iterator<SelectionKey> keys = selector.selectedKeys()
 						.iterator();
 
@@ -93,12 +120,10 @@ public class FraudDetectionServer {
 					if (!key.isValid())
 						continue;
 
-					if (key.isConnectable()) {
-						connect(key);
-					}
 					if (key.isWritable()) {
 						write(key);
 					}
+
 					if (key.isReadable()) {
 						read(key);
 					}
@@ -122,7 +147,7 @@ public class FraudDetectionServer {
 	private void read(SelectionKey key) throws IOException {
 		SocketChannel channel = (SocketChannel) key.channel();
 		ByteBuffer readBuffer = ByteBuffer.allocate(128);
-		int length = 0;
+		int length;
 		try {
 			length = channel.read(readBuffer);
 		} catch (IOException e) {
@@ -131,62 +156,60 @@ public class FraudDetectionServer {
 			channel.close();
 			return;
 		}
+		if(length == -1) {
+			log.warning("Remote socket closed. Initiating Shutdown.");
+			key.cancel();
+			handleRemoteSocketTermination();
+			return;
+		}
+		if(readBuffer.position() == 0) {
+			log.warning("Bad Transaction Received. Discarding...");
+			return;
+		}
 		readBuffer.flip();
 
 		byte[] buff = new byte[length];
 		readBuffer.get(buff, 0, length);
-		readBuffer.clear();
+
+		if(readBuffer.hasRemaining()) {
+			readBuffer.compact();
+		} else {
+			readBuffer.clear();
+		}
 		String txnString = new String(buff);
 		if (error(txnString)) {
 			log.warning("Bad Transaction Received. Discarding...");
 		} else
 			process(txnString);
+
+	}
+
+	private void handleRemoteSocketTermination() {
+		try {
+			channel.close();
+			log.warning("Shutdown complete.");
+			System.exit(0);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private boolean error(String txnString) {
-		if (txnString.endsWith(CHECKSUM)) {
-			txnString = txnString.substring(0, txnString.length() - 9);
-			return false;
-		}
-		return true;
+		return !txnString.endsWith("@CAFEBABE");
 	}
 
 	private void write(SelectionKey key) throws IOException {
 		key.interestOps(SelectionKey.OP_READ);
 	}
 
-	private void connect(SelectionKey key) throws IOException {
-		SocketChannel channel = (SocketChannel) key.channel();
-		channel.configureBlocking(false);
-		if (channel.isConnectionPending()) {
-			channel.finishConnect();
-		}
-		// while (!channel.isConnected()) {
-		// try {
-		// log.warning("TransactionGenerator not available. Waiting...");
-		// channel.finishConnect();
-		// Thread.sleep(3000);
-		// // } catch(ConnectException e) {
-		// // } catch(ClosedChannelException e) {
-		// // log.warning("TransactionGenerator not available. Waiting...");
-		// } catch(InterruptedException e) {
-		// log.severe(e);
-		// }
-		// }
-		log.info("Connection with TransactionGenerator successful.!!");
-		channel.register(selector, SelectionKey.OP_WRITE);
-	}
-
 	private void process(String rawTxnString) {
+		rawTxnString = rawTxnString.substring(0, rawTxnString.length() - 9);
+
 		txnQueue.offer(rawTxnString);
 	}
 
-	public void setTransactionQueue(BlockingQueue<String> queue) {
-		this.txnQueue = queue;
-	}
-
 	private void loadProperties() {
-		String propFileName = "config.properties";
+		String propFileName = "FraudDetection.properties";
 		InputStream stream = getClass().getClassLoader().getResourceAsStream(
 				propFileName);
 		if (null == stream) {
@@ -223,7 +246,7 @@ public class FraudDetectionServer {
 
 		temp = properties.getProperty("URL");
 		if (temp == null) {
-			log.severe("Missing URL. No URL provided for socket communication for incoming transactions. Exiting...");
+			log.severe("Missing URL. No URL provided for socket communication for TransactionGenerator. Exiting...");
 			System.exit(0);
 		}
 		this.URL = temp;
@@ -231,25 +254,16 @@ public class FraudDetectionServer {
 		temp = properties.getProperty("QueueCapacity");
 		if (temp == null) {
 			log.warning("Missing QueueCapacity. Using default of "
-					+ DEFAUT_QUEUE_CAPACITY);
-			queueCapacity = DEFAUT_QUEUE_CAPACITY;
+					+ DEFAULT_QUEUE_CAPACITY);
+			queueCapacity = DEFAULT_QUEUE_CAPACITY;
 		} else {
 			queueCapacity = Integer.parseInt(temp);
 		}
 
-		temp = properties.getProperty("DoWarmup");
-		Boolean doWarmup;
-		if (temp == null) {
-			log.info("Missing DoWarmup. No configuration provided for initial warmup");
-			doWarmup = false;
-		} else {
-			doWarmup = Boolean.parseBoolean(properties.getProperty("doWarmup"));
-		}
-		System.setProperty("DoWarmup", doWarmup.toString());
-
 		temp = properties.getProperty("ShowCacheStatistics");
 		if (temp == null) {
 			log.warning("Default ShowCacheStatistics used");
+			temp = "false";
 		}
 		System.setProperty("ShowCacheStatistics", temp);
 	}

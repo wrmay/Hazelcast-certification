@@ -29,7 +29,7 @@ public class TransactionsGenerator implements Runnable {
     private final static int PORT = 8511;
     private final static long TIMEOUT = 10000;
     private int TEST_DURATION = 120;
-    private int TRANSACTION_WRITE_INTERVAL = 1;
+    private int TRANSACTION_WRITE_INTERVAL = 500;
     
 	private AtomicInteger txnCounter = new AtomicInteger();
 	private AtomicBoolean showStopper = new AtomicBoolean();
@@ -59,7 +59,7 @@ public class TransactionsGenerator implements Runnable {
     }
  
     private void loadProperties() {
-    	String propFileName = "config.properties";
+    	String propFileName = "FraudDetection.properties";
 		InputStream stream = getClass().getClassLoader().getResourceAsStream(
 				propFileName);
 		if (null == stream) {
@@ -80,7 +80,7 @@ public class TransactionsGenerator implements Runnable {
 	}
     
 	private void setProperties(Properties properties) {
-		String temp = properties.getProperty("TransactionsGeneratorTestDuration");
+		String temp = properties.getProperty("TransactionsGeneratorDuration");
 		if (temp == null) {
 			log.info("Missing TransactionsGeneratorTestDuration. No test duration provided. Default of 2 mins will be used.");
 			return;
@@ -89,7 +89,7 @@ public class TransactionsGenerator implements Runnable {
 		
 		temp = properties.getProperty("TransactionWriteInterval");
 		if (temp == null) {
-			log.info("Missing TransactionsWriteInterval. To write interval provided. Default of 1ms will be used.");
+			log.info("Missing TransactionWriteInterval. To write interval provided. Default of 1ms will be used.");
 			return;
 		}
 		this.TRANSACTION_WRITE_INTERVAL = Integer.parseInt(temp);
@@ -104,11 +104,8 @@ public class TransactionsGenerator implements Runnable {
     }
 	
 	private boolean shouldStop() {
-		if(TEST_DURATION == 0) {
-			return false;
-		}
-		return showStopper.get();
-	}
+        return TEST_DURATION != 0 && showStopper.get();
+    }
 
 	@Override
     public void run() {
@@ -120,7 +117,7 @@ public class TransactionsGenerator implements Runnable {
                 while (keys.hasNext()){
                     SelectionKey key = keys.next();
                     keys.remove();
- 
+
                     if (!key.isValid()){
                         continue;
                     }
@@ -135,8 +132,11 @@ public class TransactionsGenerator implements Runnable {
                     }
                 }
             }
+            if(shouldStop()) {
+                log.info("Test Completed. Initiating Shutdown.");
+            }
         } catch (IOException e){
-            e.printStackTrace();
+            log.severe(e);
 		} finally{
             closeConnection();
         }
@@ -145,21 +145,23 @@ public class TransactionsGenerator implements Runnable {
     private void write(SelectionKey key) throws IOException{
         SocketChannel channel = (SocketChannel) key.channel();
         String nextTxn = getNextTransaction();
-        byte[] byteBuff = addParityChecksum(nextTxn).getBytes();
+
+        nextTxn = addParityChecksum(nextTxn);
+
+        byte[] byteBuff = nextTxn.getBytes();
         ByteBuffer outBuf = ByteBuffer.wrap(byteBuff);
         while(outBuf.hasRemaining()) {
         	channel.write(outBuf);
         }
         try {
-			Thread.sleep(TRANSACTION_WRITE_INTERVAL);
+			TimeUnit.MILLISECONDS.sleep(TRANSACTION_WRITE_INTERVAL);
 		} catch (InterruptedException e) {
 			log.severe(e);
 		}
     }
     
     private String addParityChecksum(String rawTxn) {
-        String CHECKSUM = "@CAFEBABE";
-        return rawTxn+ CHECKSUM;
+        return rawTxn + "@CAFEBABE";
     }
     
     private void closeConnection(){
@@ -227,6 +229,6 @@ public class TransactionsGenerator implements Runnable {
     private String getNextTransaction() {
     	int counter = getNextCounter();
 		String creditCardNumber = TransactionsUtil.generateCreditCardNumber(counter);
-    	return TransactionsUtil.createCreditCardTransaction(creditCardNumber, counter).toString();
+    	return TransactionsUtil.createAndGetCreditCardTransaction(creditCardNumber, counter);
     } 
 }

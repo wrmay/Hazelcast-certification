@@ -2,8 +2,6 @@ package hazelcast.cert.com.process;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceAware;
-import com.hazelcast.logging.ILogger;
-import com.hazelcast.logging.Logger;
 import hazelcast.cert.com.business.ruleengine.RuleEngine;
 import hazelcast.cert.com.data.DataAccessManager;
 import hazelcast.cert.com.domain.Transaction;
@@ -14,8 +12,6 @@ import java.util.concurrent.Callable;
 
 public class FraudDetectionTask implements Callable<Boolean>, Serializable, HazelcastInstanceAware {
 	
-	private final static ILogger log = Logger.getLogger(FraudDetectionTask.class);
-
 	private transient HazelcastInstance hazelcast;
 
 	private Transaction txn;

@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * </b>. Application can only obtain a credit card transaction from this
  * blocking queue using <code>getNextTxn()</code>. <br>
  * This app also allows to warm-up the NearCache client by setting a property
- * <code>doWarmup</code> to <code>true</code> in <code>config.properties</code>.
+ * <code>doWarmup</code> to <code>true</code> in <code>FraudDetection.properties</code>.
  * In such case, <code>warmup()</code> will be invoked before starting the
  * process of fraud detection. <br>
  * To start the process of fraud detection for a given transaction, invoke
@@ -37,22 +37,10 @@ public abstract class FraudDetection {
 
 	private final static ILogger log = Logger.getLogger(FraudDetection.class);
 
-	protected boolean doWarmup;
-
 	private AtomicInteger overallTPS;
 	protected BlockingQueue<String> txnQueue;
 	
-	private void doWarmup() {
-		if(Boolean.getBoolean(System.getProperty("DoWarmup"))) {
-		long start = System.currentTimeMillis();
-		warmup();
-		log.info("Total time taken in warmup on this node is "
-				+ (System.currentTimeMillis() - start) + " ms");
-		}
-	}
-	
 	public void run() {
-		doWarmup();
 		startPerformanceMonitor();
 		startFraudDetection();
 	}
@@ -74,7 +62,7 @@ public abstract class FraudDetection {
 		Thread monitor = new Thread() {
 			public void run() {
 				try {
-					while (true) {
+					while (!Thread.interrupted()) {
 						sleep(5000);
 						log.info("Transactions processed per second = "
 								+ (overallTPS.getAndSet(0) / 5));
@@ -96,7 +84,7 @@ public abstract class FraudDetection {
 		Transaction txn = new Transaction();
 		String[] cName = txnString.split(",");
 		txn.setCreditCardNumber(cName[0]);
-		txn.setTimeStamp(Long.parseLong(cName[1]));//.substring(0, 19));
+		txn.setTimeStamp(Long.parseLong(cName[1]));
 		txn.setCountryCode(cName[2]);
 		txn.setResponseCode(cName[3]);
 		txn.setTxnAmt(cName[4]);
@@ -107,7 +95,5 @@ public abstract class FraudDetection {
 	}
 
 	protected abstract void startFraudDetection();
-
-	protected abstract void warmup();
 
 }

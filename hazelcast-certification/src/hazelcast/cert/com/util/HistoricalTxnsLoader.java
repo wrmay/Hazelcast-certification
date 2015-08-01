@@ -34,7 +34,7 @@ public class HistoricalTxnsLoader {
 	}
 	
 	private void loadProperties() {
-		String propFileName = "config.properties";
+		String propFileName = "FraudDetection.properties";
 		InputStream stream = HistoricalTxnsLoader.class.getClassLoader().getResourceAsStream(propFileName);
 		if (null == stream) {
 			try {
@@ -52,7 +52,8 @@ public class HistoricalTxnsLoader {
 			log.severe(e);
 		}
 	}
-	
+
+
 	private void setProperties(Properties properties) {
 		
 		String temp = properties.getProperty("HistoricalCreditCardCount");
@@ -66,28 +67,30 @@ public class HistoricalTxnsLoader {
 		temp = properties.getProperty("LoaderThreadCount");
 		if(temp == null) {
 			log.warning("No LoaderThreadCount provided. Using default of 1");
-		}
-		LOADER_THREAD_COUNT = Integer.parseInt(temp);
+			LOADER_THREAD_COUNT = 1;
+		} else
+			LOADER_THREAD_COUNT = Integer.parseInt(temp);
 		
 		temp = properties.getProperty("TransactionsPerCard");
 		if(temp == null) {
 			log.warning("No TransactionsPerCard provided. Using default of 10");
-		}
-		TRANSACTIONS_PER_CARD = Integer.parseInt(temp);
+			TRANSACTIONS_PER_CARD = 10;
+		} else
+			TRANSACTIONS_PER_CARD = Integer.parseInt(temp);
 		
 		temp = properties.getProperty("BulkUpload");
 		if(temp == null) {
-			log.warning("No configuration for BulkUpload provided. Using default of false");
+			log.warning("No configuration for BulkUpload provided. Using non-Bulk load mode");
 			BULK_UPLOAD_ENABLED = false;
-		}
-		BULK_UPLOAD_ENABLED = Boolean.getBoolean(temp);
+		} else
+			BULK_UPLOAD_ENABLED = Boolean.getBoolean(temp);
 		
 		temp = properties.getProperty("BulkUploadBatchSize");
 		if(temp == null && BULK_UPLOAD_ENABLED) {
-			log.warning("No configuration for BulkUploadBatchSize provided. Using default");
+			log.warning("Bulk Upload enabled but no configuration for BulkUploadBatchSize provided. Using default of 1000");
 			BULK_UPLOAD_BATCH_SIZE = 1000;
-		}
-		BULK_UPLOAD_BATCH_SIZE = Integer.parseInt(temp);
+		} else if(temp != null && BULK_UPLOAD_ENABLED)
+			BULK_UPLOAD_BATCH_SIZE = Integer.parseInt(temp);
 		
 		temp = properties.getProperty("MapName");
 		if(temp == null) {
@@ -113,17 +116,11 @@ public class HistoricalTxnsLoader {
 	 * Generates credit card accounts and historical transactions for each
 	 * credit card. Each Credit Card is a unique account number. It takes a
 	 * start point for credit card number and total cards to be created
-	 * 
-	 * @param startCreditCardCount
-	 *            is the starting point for creating Credit Cards
-	 * @param totalCreditCards
-	 *            total number of cards to be created
-	 * @param txnCount
-	 *            total transactions per credit card
-	 * @return Map of Credit Cards and their transactions
+	 *
 	 * @throws InterruptedException 
 	 */
 	public void loadHistoricalTxns() throws InterruptedException {
+		log.info("Starting to load historical data in Hazelcast servers");
 		CountDownLatch latch = new CountDownLatch(LOADER_THREAD_COUNT);
 		ExecutorService service = Executors.newFixedThreadPool(LOADER_THREAD_COUNT);
 		final int perThread = TOTAL_CREDIT_CARDS/LOADER_THREAD_COUNT;
@@ -133,6 +130,9 @@ public class HistoricalTxnsLoader {
 			service.execute(new Loader(start, end, latch));
 		}
 		latch.await();
+		service.shutdown();
+		log.info("Data upload complete. Exiting now.");
+		System.exit(0);
 	}
 	
 	private class Loader implements Runnable{
@@ -148,10 +148,10 @@ public class HistoricalTxnsLoader {
 		
 		public void run() {
 			int putAllCounter = 0;
-			Map<String, List<Transaction>> localMap = new HashMap<String, List<Transaction>>();
+			Map<String, List<Transaction>> localMap = new HashMap<>();
 			for (int i = start; i < end; i++) {
 				String creditCardNumber = TransactionsUtil.generateCreditCardNumber(i);
-				List<Transaction> cardTxns = TransactionsUtil.createCreditCardTransactions(creditCardNumber, TRANSACTIONS_PER_CARD);
+				List<Transaction> cardTxns = TransactionsUtil.createAndGetCreditCardTransactions(creditCardNumber, TRANSACTIONS_PER_CARD);
 				if(BULK_UPLOAD_ENABLED) {
 					if(putAllCounter < BULK_UPLOAD_BATCH_SIZE) {
 						localMap.put(creditCardNumber, cardTxns);
