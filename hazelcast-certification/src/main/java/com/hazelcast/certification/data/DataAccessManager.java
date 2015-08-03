@@ -27,7 +27,7 @@ public class DataAccessManager {
 		IMap<String, List<Transaction>> map = hazelcast.getMap(HAZELCAST_MAP_NAME);
 		List<Transaction> allTxns = map.get(currentTxn.getCreditCardNumber());
 		if(allTxns == null) {
-			allTxns = new ArrayList<>();
+			allTxns = new ArrayList<Transaction>();
 		}
 		allTxns.add(currentTxn);
 		map.set(currentTxn.getCreditCardNumber(), allTxns);
