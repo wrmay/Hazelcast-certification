@@ -1,10 +1,10 @@
-package hazelcast.cert.com.data;
+package com.hazelcast.certification.data;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
-import hazelcast.cert.com.domain.Transaction;
+import com.hazelcast.certification.domain.Transaction;
 
 import java.util.ArrayList;
 import java.util.List;

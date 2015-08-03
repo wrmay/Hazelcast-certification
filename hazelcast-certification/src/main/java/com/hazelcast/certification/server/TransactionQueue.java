@@ -1,4 +1,4 @@
-package hazelcast.cert.com.server;
+package com.hazelcast.certification.server;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;

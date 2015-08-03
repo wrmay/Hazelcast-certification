@@ -1,6 +1,6 @@
-package hazelcast.cert.com.util;
+package com.hazelcast.certification.util;
 
-import hazelcast.cert.com.domain.Transaction;
+import com.hazelcast.certification.domain.Transaction;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -36,15 +36,6 @@ public class TransactionsUtil {
 				.append(",").append(generateMerchantType())
 				.append(",").append(generateCityCode())
 				.append(",").append(generateTxnCode(code));
-		//txn.append("," + countryCode);
-		//txn.append("," + generateResponseCode(code));
-		//txn.append("," + generateTxnAmount());
-		//Currency is same as CountryCode
-		//txn.append("," + countryCode);
-		//txn.append("," + generateMerchantType());
-		//txn.append("," + generateCityCode());
-		//txn.append("," + generateTxnCode(code));
-
 
 		return txn.toString();
 	}

@@ -1,10 +1,10 @@
-package hazelcast.cert.com.util;
+package com.hazelcast.certification.util;
 
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
-import hazelcast.cert.com.domain.Transaction;
+import com.hazelcast.certification.domain.Transaction;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;

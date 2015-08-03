@@ -1,8 +1,8 @@
-package hazelcast.cert.com.process;
+package com.hazelcast.certification.process;
 
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
-import hazelcast.cert.com.domain.Transaction;
+import com.hazelcast.certification.domain.Transaction;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;

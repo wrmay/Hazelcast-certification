@@ -1,5 +1,6 @@
-package hazelcast.cert.com.process;
+package com.hazelcast.certification.process;
 
+import com.hazelcast.certification.domain.Transaction;
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.ExecutorConfig;
@@ -7,7 +8,6 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IExecutorService;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
-import hazelcast.cert.com.domain.Transaction;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -20,7 +20,7 @@ import java.util.concurrent.Future;
  * @author rahul
  *
  */
-public class FraudDetectionImpl extends FraudDetection {
+public class FraudDetectionImpl extends com.hazelcast.certification.process.FraudDetection {
 
 	private final static ILogger log = Logger.getLogger(FraudDetectionImpl.class);
 	private static HazelcastInstance HAZELCAST;
@@ -43,7 +43,7 @@ public class FraudDetectionImpl extends FraudDetection {
 			try {
 				Transaction txn = getNextTxn();
 				if(txn != null) {
-					Future<Boolean> future = service.submitToKeyOwner(new FraudDetectionTask(txn), getClusterKey(txn));
+					Future<Boolean> future = service.submitToKeyOwner(new com.hazelcast.certification.process.FraudDetectionTask(txn), getClusterKey(txn));
 					//log.info("Fraud transaction Credit Card ID:" + txn.getCreditCardNumber() + ": " + future.get());
 					future.get();
 

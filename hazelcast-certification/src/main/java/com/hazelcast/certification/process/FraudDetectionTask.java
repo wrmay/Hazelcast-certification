@@ -1,10 +1,10 @@
-package hazelcast.cert.com.process;
+package com.hazelcast.certification.process;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceAware;
-import hazelcast.cert.com.business.ruleengine.RuleEngine;
-import hazelcast.cert.com.data.DataAccessManager;
-import hazelcast.cert.com.domain.Transaction;
+import com.hazelcast.certification.business.ruleengine.RuleEngine;
+import com.hazelcast.certification.data.DataAccessManager;
+import com.hazelcast.certification.domain.Transaction;
 
 import java.io.Serializable;
 import java.util.List;

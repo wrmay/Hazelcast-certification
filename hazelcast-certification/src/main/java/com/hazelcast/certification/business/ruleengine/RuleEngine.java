@@ -1,8 +1,8 @@
-package hazelcast.cert.com.business.ruleengine;
+package com.hazelcast.certification.business.ruleengine;
 
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
-import hazelcast.cert.com.domain.Transaction;
+import com.hazelcast.certification.domain.Transaction;
 import org.joda.time.DateTime;
 
 import java.text.ParseException;

@@ -1,4 +1,4 @@
-package hazelcast.cert.com.util;
+package com.hazelcast.certification.util;
 
 
 public class TransactionsGeneratorRunner {

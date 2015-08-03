@@ -1,4 +1,4 @@
-package hazelcast.cert.com.domain;
+package com.hazelcast.certification.domain;
 
 import java.io.Serializable;
 

@@ -1,8 +1,8 @@
-package hazelcast.cert.com.server;
+package com.hazelcast.certification.server;
 
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
-import hazelcast.cert.com.process.FraudDetection;
+import com.hazelcast.certification.process.FraudDetection;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -53,7 +53,7 @@ public class FraudDetectionServer {
 		}
 		if (fraudDetectionImpl == null
 				|| !(fraudDetectionImpl instanceof FraudDetection)) {
-			log.severe("Invalid FraudDetection implementation provided. The implementation must extend hazelcast.cert.com.process.FraudDetection. Exiting...");
+			log.severe("Invalid FraudDetection implementation provided. The implementation must extend FraudDetection. Exiting...");
 			System.exit(0);
 		}
 		final FraudDetection fraudD = (FraudDetection) fraudDetectionImpl;
