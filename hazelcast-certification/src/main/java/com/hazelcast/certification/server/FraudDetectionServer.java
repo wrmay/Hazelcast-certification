@@ -237,7 +237,7 @@ public class FraudDetectionServer {
 		}
 		this.FRAUD_DETECTION_IMPL_PROVIDER = temp;
 
-		temp = properties.getProperty("Port");
+		temp = properties.getProperty("PORT");
 		if (temp == null) {
 			log.severe("Missing Port. No Port provided for socket communication for incoming transactions. Exiting...");
 			System.exit(0);
