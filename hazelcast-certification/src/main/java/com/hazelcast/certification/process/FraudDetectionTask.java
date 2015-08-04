@@ -1,16 +1,15 @@
 package com.hazelcast.certification.process;
 
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.HazelcastInstanceAware;
 import com.hazelcast.certification.business.ruleengine.RuleEngine;
 import com.hazelcast.certification.data.DataAccessManager;
 import com.hazelcast.certification.domain.Transaction;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.HazelcastInstanceAware;
 
 import java.io.Serializable;
 import java.util.List;
-import java.util.concurrent.Callable;
 
-public class FraudDetectionTask implements Callable<Boolean>, Serializable, HazelcastInstanceAware {
+public class FraudDetectionTask implements Serializable, HazelcastInstanceAware, Runnable { //Callable<Boolean> {
 	
 	private transient HazelcastInstance hazelcast;
 
@@ -20,8 +19,8 @@ public class FraudDetectionTask implements Callable<Boolean>, Serializable, Haze
 		this.txn = txn;
 	}
 	
-	@Override
-	public Boolean call() throws Exception {
+	//public Boolean call() throws Exception {
+	public void run() {
 
 		DataAccessManager dm = new DataAccessManager();
 		dm.setHazelcastInstance(hazelcast);
@@ -30,10 +29,9 @@ public class FraudDetectionTask implements Callable<Boolean>, Serializable, Haze
 		RuleEngine ruleEngine = new RuleEngine();
 		ruleEngine.setRulesAttributes(txn, allTxns);
 		ruleEngine.executeRules();
-		return ruleEngine.isFraudTxn();
+		//return ruleEngine.isFraudTxn();
 	}
 
-	@Override
 	public void setHazelcastInstance(HazelcastInstance hazelcastInstance) {
 		this.hazelcast = hazelcastInstance;
 	}

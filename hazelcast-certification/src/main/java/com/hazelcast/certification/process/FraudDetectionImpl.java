@@ -9,9 +9,6 @@ import com.hazelcast.core.IExecutorService;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-
 /**
  * This implementation assumes cluster in Client-Server setup. Other
  * implementations may not use Client-Server, create HazelcastInstance
@@ -45,16 +42,16 @@ public class FraudDetectionImpl extends com.hazelcast.certification.process.Frau
 			try {
 				Transaction txn = getNextTxn();
 				if(txn != null) {
-					Future<Boolean> future = service.submitToKeyOwner(new com.hazelcast.certification.process.FraudDetectionTask(txn), getClusterKey(txn));
+					//Future<Boolean> future = service.submitToKeyOwner(new com.hazelcast.certification.process.FraudDetectionTask(txn), getClusterKey(txn));
+					//Future<Boolean> future = service.submit(new com.hazelcast.certification.process.FraudDetectionTask(txn));//, getClusterKey(txn));
 					//log.info("Fraud transaction Credit Card ID:" + txn.getCreditCardNumber() + ": " + future.get());
-					future.get();
+					//future.get();
 
+					service.executeOnKeyOwner(new com.hazelcast.certification.process.FraudDetectionTask(txn), getClusterKey(txn));
 					getTPSCounter().incrementAndGet();
 				}
 			} catch (InterruptedException e) {
 				log.severe(e);
-			} catch (ExecutionException e) {
-				log.severe("ExecutionException", e);
 			} catch (ArrayIndexOutOfBoundsException e) {
 				log.info("Bad String received... discarding.");
 			}
