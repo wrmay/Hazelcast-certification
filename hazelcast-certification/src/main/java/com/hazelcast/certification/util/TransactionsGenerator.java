@@ -24,9 +24,9 @@ public class TransactionsGenerator implements Runnable {
  
 	private final static ILogger log = Logger.getLogger(TransactionsGenerator.class);
 
-    private final static String ADDRESS = "127.0.0.1";
+    private static String URL;
     
-    private final static int PORT = 8511;
+    private static int PORT = 8511;
     private final static long TIMEOUT = 10000;
     private int TEST_DURATION = 120;
     private int TRANSACTION_WRITE_INTERVAL = 500;
@@ -42,20 +42,21 @@ public class TransactionsGenerator implements Runnable {
     }
  
     private void init(){
+        loadProperties();
+
         log.info("Initializing server");
         if (selector != null) return;
         if (serverChannel != null) return;
- 
+
         try {
             selector = Selector.open();
             serverChannel = ServerSocketChannel.open();
             serverChannel.configureBlocking(false);
-            serverChannel.socket().bind(new InetSocketAddress(ADDRESS, PORT));
+            serverChannel.socket().bind(new InetSocketAddress(URL, PORT));
             serverChannel.register(selector, SelectionKey.OP_ACCEPT);
         } catch (IOException e) {
             log.severe(e);
         }
-        loadProperties();
     }
  
     private void loadProperties() {
@@ -93,6 +94,20 @@ public class TransactionsGenerator implements Runnable {
 			return;
 		}
 		this.TRANSACTION_WRITE_INTERVAL = Integer.parseInt(temp);
+
+        temp = properties.getProperty("TransactionGenerator_URL");
+        if (temp == null) {
+            log.info("Missing URL for TransactionGenerator. Provide a valid URL for TransactionGenerator to listen to incoming connections. Exiting..");
+            System.exit(0);
+        }
+        URL = temp;
+
+        temp = properties.getProperty("TransactionGenerator_PORT");
+        if (temp == null) {
+            log.info("Missing Port for TransactionGenerator. Provide a valid Port for TransactionGenerator to listen to incoming connections. Exiting..");
+            System.exit(0);
+        }
+        PORT = Integer.parseInt(temp);
 	}
 
 	private void startTimer() {
