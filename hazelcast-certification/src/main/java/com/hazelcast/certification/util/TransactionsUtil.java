@@ -42,7 +42,9 @@ public class TransactionsUtil {
 				.append(",").append(countryCode)
 				.append(",").append(generateMerchantType())
 				.append(",").append(generateCityCode())
-				.append(",").append(generateTxnCode(code));
+				.append(",").append(generateTxnCode(code))
+				.append(new String(new byte[99 - txn.toString().getBytes().length]))
+				.append("\n");
 
 		return txn.toString();
 	}

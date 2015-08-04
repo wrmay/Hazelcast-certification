@@ -27,10 +27,12 @@ public class TransactionsGenerator implements Runnable {
     private static String URL;
     
     private static int PORT;
+
+    private final static int SIZE_OF_PACKET = 100;
+
     private final static long TIMEOUT = 10000;
     private int TEST_DURATION = 120;
-    private int TRANSACTION_WRITE_INTERVAL = 500;
-    
+
 	private AtomicInteger txnCounter = new AtomicInteger();
 	private AtomicBoolean showStopper = new AtomicBoolean();
      
@@ -91,13 +93,6 @@ public class TransactionsGenerator implements Runnable {
 		}
 		this.TEST_DURATION = Integer.parseInt(temp);
 		
-		temp = properties.getProperty("TransactionWriteInterval");
-		if (temp == null) {
-			log.info("Missing TransactionWriteInterval. To write interval provided. Default of 1ms will be used.");
-			return;
-		}
-		this.TRANSACTION_WRITE_INTERVAL = Integer.parseInt(temp);
-
         temp = properties.getProperty("URL");
         if (temp == null) {
             log.info("Missing URL for TransactionGenerator. Provide URL to listen to incoming connections. Exiting..");
@@ -125,7 +120,6 @@ public class TransactionsGenerator implements Runnable {
         return TEST_DURATION != 0 && showStopper.get();
     }
 
-	@Override
     public void run() {
         log.info("Initialised. Now ready to accept connections...");
         try{
@@ -164,25 +158,17 @@ public class TransactionsGenerator implements Runnable {
         SocketChannel channel = (SocketChannel) key.channel();
         String nextTxn = getNextTransaction();
 
-        nextTxn = addParityChecksum(nextTxn);
-
-        byte[] byteBuff = nextTxn.getBytes();
-        ByteBuffer outBuf = ByteBuffer.wrap(byteBuff);
-        while(outBuf.hasRemaining()) {
-        	channel.write(outBuf);
+        ByteBuffer buffer = ByteBuffer.wrap(nextTxn.getBytes());
+        int out = channel.write(buffer);
+        while(out != SIZE_OF_PACKET){
+            int tmpOut = channel.write(buffer);
+            out = out + tmpOut;
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
-
-        key.interestOps(SelectionKey.OP_READ);
-
-        try {
-			TimeUnit.MILLISECONDS.sleep(TRANSACTION_WRITE_INTERVAL);
-		} catch (InterruptedException e) {
-			log.severe(e);
-		}
-    }
-    
-    private String addParityChecksum(String rawTxn) {
-        return rawTxn + "@CAFEBABE";
     }
     
     private void closeConnection(){
@@ -218,27 +204,6 @@ public class TransactionsGenerator implements Runnable {
     }
  
     private void read(SelectionKey key) throws IOException{
-//        SocketChannel channel = (SocketChannel) key.channel();
-//        ByteBuffer readBuffer = ByteBuffer.allocate(128);
-//        readBuffer.clear();
-//        int read;
-//        try {
-//            read = channel.read(readBuffer);
-//        } catch (IOException e) {
-//            key.cancel();
-//            channel.close();
-//            return;
-//        }
-//        if (read == -1){
-//            channel.close();
-//            key.cancel();
-//            return;
-//        }
-//        readBuffer.flip();
-//        byte[] data = new byte[128];
-//        readBuffer.get(data, 0, read);
-//        log.info("Received: " + new String(data));
- 
         key.interestOps(SelectionKey.OP_WRITE);
     }
 

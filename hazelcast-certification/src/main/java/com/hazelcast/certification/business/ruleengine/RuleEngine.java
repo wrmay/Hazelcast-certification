@@ -77,7 +77,6 @@ public class RuleEngine {
 			rule47();
 			rule48();
 			rule49();
-			rule50();
 		} catch (ParseException e) {
 			log.severe(e);
 		}
@@ -681,24 +680,7 @@ public class RuleEngine {
 		historicalTxns.add(currentTxn);
 	}
 
-	private void rule46()
-			throws ParseException {
-
-		historicalTxns.remove(currentTxn);
-
-		DateTime dateTimeLocal = new DateTime(dateTime.toDateTime());
-		for (Transaction txn : historicalTxns) {
-			dateTimeLocal = dateTimeLocal.minusDays(50);
-			DateTime txn_time = new DateTime(txn.getTimeStamp());
-			if (txn_time.isAfter(dateTimeLocal) && Integer.parseInt(txn.getTxnCode()) > 5
-					&& Integer.parseInt(currentTxn.getTxnAmt()) > 20000) {
-				detectionResult = true;
-			}
-		}
-		historicalTxns.add(currentTxn);
-	}
-
-	private void rule47() throws ParseException {
+	private void rule46() throws ParseException {
 
 		historicalTxns.remove(currentTxn);
 		int count = 0;
@@ -716,7 +698,7 @@ public class RuleEngine {
 		historicalTxns.add(currentTxn);
 	}
 
-	private void rule48()
+	private void rule47()
 			throws ParseException {
 
 		historicalTxns.remove(currentTxn);
@@ -742,7 +724,7 @@ public class RuleEngine {
 		historicalTxns.add(currentTxn);
 	}
 
-	private void rule49()
+	private void rule48()
 			throws ParseException {
 
 		historicalTxns.remove(currentTxn);
@@ -765,7 +747,7 @@ public class RuleEngine {
 		historicalTxns.add(currentTxn);
 	}
 
-	private void rule50()
+	private void rule49()
 			throws ParseException {
 
 		historicalTxns.remove(currentTxn);

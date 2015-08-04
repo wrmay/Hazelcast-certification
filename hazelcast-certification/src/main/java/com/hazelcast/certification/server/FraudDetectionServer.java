@@ -1,8 +1,8 @@
 package com.hazelcast.certification.server;
 
+import com.hazelcast.certification.process.FraudDetection;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
-import com.hazelcast.certification.process.FraudDetection;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -10,9 +10,12 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
 import java.util.Iterator;
 import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
@@ -31,10 +34,19 @@ public class FraudDetectionServer {
 	private String FRAUD_DETECTION_IMPL_PROVIDER;
 	private final static int DEFAULT_QUEUE_CAPACITY = 10000;
 
+	private ByteBuffer clientBuffer;
+	private final static int BUFFER_SIZE = 100;
+	private static CharsetDecoder decoder = Charset.forName("ASCII").newDecoder();
+
 	public FraudDetectionServer() {
+		setup();
 		loadProperties();
 		bindQueue();
 		initializeFraudDetection();
+	}
+
+	private void setup() {
+		clientBuffer = ByteBuffer.allocate(100);
 	}
 
 	private void initializeFraudDetection() {
@@ -145,44 +157,39 @@ public class FraudDetectionServer {
 	}
 
 	private void read(SelectionKey key) throws IOException {
+		clientBuffer.clear();
 		SocketChannel channel = (SocketChannel) key.channel();
-		ByteBuffer readBuffer = ByteBuffer.allocate(128);
-		int length;
-		try {
-			length = channel.read(readBuffer);
-		} catch (IOException e) {
-			log.severe("Reading problem, closing connection");
-			key.cancel();
-			channel.close();
-			return;
-		}
-		if(length == -1) {
-			log.warning("Remote socket closed. Initiating Shutdown.");
-			key.cancel();
-			handleRemoteSocketTermination();
-			return;
-		}
-		if(readBuffer.position() == 0) {
-			log.warning("Bad Transaction Received. Discarding...");
-			return;
-		}
-		readBuffer.flip();
+		int length = channel.read(clientBuffer);
 
-		byte[] buff = new byte[length];
-		readBuffer.get(buff, 0, length);
+		if (length > 0) {
+			channel.register(selector, SelectionKey.OP_WRITE);
+			int healthCheckDegree = 0;
+			while (length != BUFFER_SIZE) {
+				healthCheckDegree++;
 
-		if(readBuffer.hasRemaining()) {
-			readBuffer.compact();
+				int tmpLength = channel.read(clientBuffer);
+				length = length + tmpLength;
+
+				if (healthCheckDegree >= 200) {
+					log.info("Bad Network. Waiting for transactions.");
+					try {
+						Thread.sleep(10);
+					} catch(InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+			clientBuffer.flip();
+			CharBuffer charBuffer = decoder.decode(clientBuffer);
+			//if(length == BUFFER_SIZE) {
+				process(charBuffer.toString());
+			//}
+			clientBuffer.clear();
 		} else {
-			readBuffer.clear();
+			handleRemoteSocketTermination();
 		}
-		String txnString = new String(buff);
-		if (error(txnString)) {
-			log.warning("Bad Transaction Received. Discarding...");
-		} else
-			process(txnString);
-
 	}
+
 
 	private void handleRemoteSocketTermination() {
 		try {
@@ -194,17 +201,12 @@ public class FraudDetectionServer {
 		}
 	}
 
-	private boolean error(String txnString) {
-		return !txnString.endsWith("@CAFEBABE");
-	}
-
 	private void write(SelectionKey key) throws IOException {
 		key.interestOps(SelectionKey.OP_READ);
 	}
 
 	private void process(String rawTxnString) {
 		rawTxnString = rawTxnString.substring(0, rawTxnString.length() - 9);
-
 		txnQueue.offer(rawTxnString);
 	}
 
