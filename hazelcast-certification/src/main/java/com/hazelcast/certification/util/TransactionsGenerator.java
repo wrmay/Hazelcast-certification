@@ -36,6 +36,8 @@ public class TransactionsGenerator implements Runnable {
      
     private ServerSocketChannel serverChannel;
     private Selector selector;
+
+    private TransactionsUtil txnUtil;
  
     public TransactionsGenerator(){
         init();
@@ -43,6 +45,7 @@ public class TransactionsGenerator implements Runnable {
  
     private void init(){
         loadProperties();
+        txnUtil = new TransactionsUtil();
 
         log.info("Initializing server");
         if (selector != null) return;
@@ -168,6 +171,9 @@ public class TransactionsGenerator implements Runnable {
         while(outBuf.hasRemaining()) {
         	channel.write(outBuf);
         }
+
+        key.interestOps(SelectionKey.OP_READ);
+
         try {
 			TimeUnit.MILLISECONDS.sleep(TRANSACTION_WRITE_INTERVAL);
 		} catch (InterruptedException e) {
@@ -212,26 +218,26 @@ public class TransactionsGenerator implements Runnable {
     }
  
     private void read(SelectionKey key) throws IOException{
-        SocketChannel channel = (SocketChannel) key.channel();
-        ByteBuffer readBuffer = ByteBuffer.allocate(128);
-        readBuffer.clear();
-        int read;
-        try {
-            read = channel.read(readBuffer);
-        } catch (IOException e) {
-            key.cancel();
-            channel.close();
-            return;
-        }
-        if (read == -1){
-            channel.close();
-            key.cancel();
-            return;
-        }
-        readBuffer.flip();
-        byte[] data = new byte[128];
-        readBuffer.get(data, 0, read);
-        log.info("Received: " + new String(data));
+//        SocketChannel channel = (SocketChannel) key.channel();
+//        ByteBuffer readBuffer = ByteBuffer.allocate(128);
+//        readBuffer.clear();
+//        int read;
+//        try {
+//            read = channel.read(readBuffer);
+//        } catch (IOException e) {
+//            key.cancel();
+//            channel.close();
+//            return;
+//        }
+//        if (read == -1){
+//            channel.close();
+//            key.cancel();
+//            return;
+//        }
+//        readBuffer.flip();
+//        byte[] data = new byte[128];
+//        readBuffer.get(data, 0, read);
+//        log.info("Received: " + new String(data));
  
         key.interestOps(SelectionKey.OP_WRITE);
     }
@@ -243,7 +249,8 @@ public class TransactionsGenerator implements Runnable {
 
     private String getNextTransaction() {
     	int counter = getNextCounter();
-		String creditCardNumber = TransactionsUtil.generateCreditCardNumber(counter);
-    	return TransactionsUtil.createAndGetCreditCardTransaction(creditCardNumber, counter);
+
+		String creditCardNumber = txnUtil.generateCreditCardNumber(counter);
+    	return txnUtil.createAndGetCreditCardTransaction(creditCardNumber, counter);
     } 
 }

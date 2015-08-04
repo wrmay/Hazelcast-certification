@@ -35,7 +35,7 @@ public class FraudDetectionImpl extends com.hazelcast.certification.process.Frau
 	@Override
 	protected void startFraudDetection() {
 		EXECUTOR_POOL_SIZE = Integer.parseInt(System.getProperty("ExecutorPoolSize"));
-		
+
 		Config config = new Config();
 		ExecutorConfig eConfig = config.getExecutorConfig(EXECUTOR_POOL_NAME);
 		eConfig.setPoolSize(EXECUTOR_POOL_SIZE).setName(EXECUTOR_POOL_NAME);

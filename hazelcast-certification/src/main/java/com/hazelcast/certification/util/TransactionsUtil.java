@@ -9,10 +9,17 @@ import java.util.Random;
 
 public class TransactionsUtil {
 
-	private static Random countryCodeRandom = new Random(1);
-	private static Random cityCodeRandom = new Random(1);
-	private static Random merchantTypeRandom = new Random(1);
-	private static Random txnAmountRandom = new Random(100);
+	private Random countryCodeRandom;
+	private Random cityCodeRandom;
+	private Random merchantTypeRandom;
+	private Random txnAmountRandom;
+
+	public TransactionsUtil() {
+		countryCodeRandom = new Random(1);
+		cityCodeRandom = new Random(1);
+		merchantTypeRandom = new Random(1);
+		txnAmountRandom = new Random(100);
+	}
 
 	/**
 	 * Create dummy transaction for the given credit card number
@@ -22,7 +29,7 @@ public class TransactionsUtil {
 	 * @param code Transaction Code which is
 	 * @return concatenated Transaction String made of all variables separated by comma (,)
 	 */
-	public static String createAndGetCreditCardTransaction(String creditCardNumber, int code) {
+	public String createAndGetCreditCardTransaction(String creditCardNumber, int code) {
 
 		StringBuffer txn = new StringBuffer();
 		String countryCode= generateCountryCode();
@@ -49,7 +56,7 @@ public class TransactionsUtil {
 	 *            number of historical transactions to create
 	 * @return List of transactions for a credit card
 	 */
-	public static List<Transaction> createAndGetCreditCardTransactions(
+	public List<Transaction> createAndGetCreditCardTransactions(
 			String creditCardNumber, int txnCount) {
 		List<Transaction> transactions = new ArrayList<Transaction>();
 		for (int j = 0; j < txnCount; j++) {
@@ -73,7 +80,7 @@ public class TransactionsUtil {
 	}
 
 	// card number : 14-bits, 00000001, 000~30000000, totally 30 Million cards
-	public static String generateCreditCardNumber(int id) {
+	public String generateCreditCardNumber(int id) {
 		StringBuilder buffer = new StringBuilder();
 		buffer.append("000000");
 		if (id < 10)
@@ -96,7 +103,7 @@ public class TransactionsUtil {
 	}
 
 	// last 90 days
-	private static long generateTimeStamp() {
+	private long generateTimeStamp() {
 		long offset = Timestamp.valueOf("2013-01-01 00:00:00").getTime();
 		long end = Timestamp.valueOf("2013-04-01 00:00:00").getTime();
 		long diff = end - offset + 1;
@@ -104,7 +111,7 @@ public class TransactionsUtil {
 		return rand.getTime();//toString();
 	}
 
-	private static String generateTxnCode(int temp) {
+	private String generateTxnCode(int temp) {
 		if (temp < 10)
 			return "0000" + temp;
 		if (temp > 10 && temp < 100)
@@ -115,7 +122,7 @@ public class TransactionsUtil {
 	}
 
 	// 001-200
-	private static String generateCountryCode() {
+	private String generateCountryCode() {
 		int number = countryCodeRandom.nextInt(200);
 		if (number < 10)
 			return "00" + number;
@@ -125,7 +132,7 @@ public class TransactionsUtil {
 	}
 
 	// 95% 00 else random 2-bits
-	private static String generateResponseCode(int count) {
+	private String generateResponseCode(int count) {
 		Random random = new Random(10);
 		if (count % 95 == 0)
 			return String.valueOf(random.nextInt(20));
@@ -134,12 +141,12 @@ public class TransactionsUtil {
 	}
 
 	// 100-50000 random
-	private static String generateTxnAmount() {
+	private String generateTxnAmount() {
 		return String.valueOf(txnAmountRandom.nextInt(50000));
 	}
 
 	// 0001-0500
-	private static String generateMerchantType() {
+	private String generateMerchantType() {
 		int merchantType = merchantTypeRandom.nextInt(500);
 		if (merchantType < 10)
 			return "000" + merchantType;
@@ -149,7 +156,7 @@ public class TransactionsUtil {
 	}
 
 	// 00001-10000
-	private static String generateCityCode() {
+	private String generateCityCode() {
 		int temp = cityCodeRandom.nextInt(10000);
 		if (temp < 10)
 			return "0000" + temp;

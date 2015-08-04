@@ -149,9 +149,10 @@ public class HistoricalTxnsLoader {
 		public void run() {
 			int putAllCounter = 0;
 			Map<String, List<Transaction>> localMap = new HashMap<String, List<Transaction>>();
+			TransactionsUtil txnUtil = new TransactionsUtil();
 			for (int i = start; i < end; i++) {
-				String creditCardNumber = TransactionsUtil.generateCreditCardNumber(i);
-				List<Transaction> cardTxns = TransactionsUtil.createAndGetCreditCardTransactions(creditCardNumber, TRANSACTIONS_PER_CARD);
+				String creditCardNumber = txnUtil.generateCreditCardNumber(i);
+				List<Transaction> cardTxns = txnUtil.createAndGetCreditCardTransactions(creditCardNumber, TRANSACTIONS_PER_CARD);
 				if(BULK_UPLOAD_ENABLED) {
 					if(putAllCounter < BULK_UPLOAD_BATCH_SIZE) {
 						localMap.put(creditCardNumber, cardTxns);
