@@ -260,6 +260,14 @@ public class FraudDetectionServer {
 			queueCapacity = Integer.parseInt(temp);
 		}
 
+		temp = properties.getProperty("ExecutorPoolSize");
+		if (temp == null) {
+			log.warning("Missing ExecutorPoolSize. Using default of 2");
+			System.setProperty("ExecutorPoolSize", String.valueOf(2));
+		} else {
+			System.setProperty("ExecutorPoolSize", temp);
+		}
+
 		temp = properties.getProperty("ShowCacheStatistics");
 		if (temp == null) {
 			log.warning("Default ShowCacheStatistics used");

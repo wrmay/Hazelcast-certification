@@ -24,16 +24,18 @@ public class FraudDetectionImpl extends com.hazelcast.certification.process.Frau
 
 	private final static ILogger log = Logger.getLogger(FraudDetectionImpl.class);
 	private static HazelcastInstance HAZELCAST;
-	private final static int EXECUTOR_POOL_SIZE = 4;
+	private static int EXECUTOR_POOL_SIZE;
 	private final static String EXECUTOR_POOL_NAME = "FraudDetectionService";
 	
 	//Initializing Client with defaults, but add more specific configurations later.
 	static {
 		HAZELCAST = HazelcastClient.newHazelcastClient();
 	}
-	
+
 	@Override
 	protected void startFraudDetection() {
+		EXECUTOR_POOL_SIZE = Integer.parseInt(System.getProperty("ExecutorPoolSize"));
+		
 		Config config = new Config();
 		ExecutorConfig eConfig = config.getExecutorConfig(EXECUTOR_POOL_NAME);
 		eConfig.setPoolSize(EXECUTOR_POOL_SIZE).setName(EXECUTOR_POOL_NAME);
