@@ -97,14 +97,14 @@ public class TransactionsGenerator implements Runnable {
 
         temp = properties.getProperty("TransactionGenerator_URL");
         if (temp == null) {
-            log.info("Missing URL for TransactionGenerator. Provide a valid URL for TransactionGenerator to listen to incoming connections. Exiting..");
+            log.info("Missing URL for TransactionGenerator. Provide TransactionGenerator_URL to listen to incoming connections. Exiting..");
             System.exit(0);
         }
         URL = temp;
 
         temp = properties.getProperty("TransactionGenerator_PORT");
         if (temp == null) {
-            log.info("Missing Port for TransactionGenerator. Provide a valid Port for TransactionGenerator to listen to incoming connections. Exiting..");
+            log.info("Missing Port for TransactionGenerator. Provide TransactionGenerator_PORT to listen to incoming connections. Exiting..");
             System.exit(0);
         }
         PORT = Integer.parseInt(temp);
