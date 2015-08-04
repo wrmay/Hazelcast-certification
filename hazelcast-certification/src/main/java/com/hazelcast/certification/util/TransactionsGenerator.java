@@ -26,7 +26,7 @@ public class TransactionsGenerator implements Runnable {
 
     private static String URL;
     
-    private static int PORT = 8511;
+    private static int PORT;
     private final static long TIMEOUT = 10000;
     private int TEST_DURATION = 120;
     private int TRANSACTION_WRITE_INTERVAL = 500;
