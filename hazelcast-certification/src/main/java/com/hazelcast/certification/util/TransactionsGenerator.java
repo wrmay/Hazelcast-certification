@@ -95,16 +95,16 @@ public class TransactionsGenerator implements Runnable {
 		}
 		this.TRANSACTION_WRITE_INTERVAL = Integer.parseInt(temp);
 
-        temp = properties.getProperty("TransactionGenerator_URL");
+        temp = properties.getProperty("URL");
         if (temp == null) {
-            log.info("Missing URL for TransactionGenerator. Provide TransactionGenerator_URL to listen to incoming connections. Exiting..");
+            log.info("Missing URL for TransactionGenerator. Provide URL to listen to incoming connections. Exiting..");
             System.exit(0);
         }
         URL = temp;
 
-        temp = properties.getProperty("TransactionGenerator_PORT");
+        temp = properties.getProperty("PORT");
         if (temp == null) {
-            log.info("Missing Port for TransactionGenerator. Provide TransactionGenerator_PORT to listen to incoming connections. Exiting..");
+            log.info("Missing Port for TransactionGenerator. Provide PORT to listen to incoming connections. Exiting..");
             System.exit(0);
         }
         PORT = Integer.parseInt(temp);
