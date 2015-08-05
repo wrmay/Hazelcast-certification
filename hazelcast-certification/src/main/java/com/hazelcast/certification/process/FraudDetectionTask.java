@@ -8,8 +8,9 @@ import com.hazelcast.core.HazelcastInstanceAware;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.concurrent.Callable;
 
-public class FraudDetectionTask implements Serializable, HazelcastInstanceAware, Runnable { //Callable<Boolean> {
+public class FraudDetectionTask implements Serializable, HazelcastInstanceAware, Callable<Boolean> {
 	
 	private transient HazelcastInstance hazelcast;
 
@@ -19,17 +20,16 @@ public class FraudDetectionTask implements Serializable, HazelcastInstanceAware,
 		this.txn = txn;
 	}
 	
-	//public Boolean call() throws Exception {
-	public void run() {
+	public Boolean call() throws Exception {
+	//public void run() {
 
 		DataAccessManager dm = new DataAccessManager();
 		dm.setHazelcastInstance(hazelcast);
 		List<Transaction> allTxns = dm.updateAndGet(txn);
 		
-		RuleEngine ruleEngine = new RuleEngine();
-		ruleEngine.setRulesAttributes(txn, allTxns);
+		RuleEngine ruleEngine = new RuleEngine(txn, allTxns);
 		ruleEngine.executeRules();
-		//return ruleEngine.isFraudTxn();
+		return ruleEngine.isFraudTxn();
 	}
 
 	public void setHazelcastInstance(HazelcastInstance hazelcastInstance) {

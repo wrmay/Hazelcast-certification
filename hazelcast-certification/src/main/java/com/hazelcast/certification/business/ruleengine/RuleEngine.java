@@ -1,8 +1,8 @@
 package com.hazelcast.certification.business.ruleengine;
 
+import com.hazelcast.certification.domain.Transaction;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
-import com.hazelcast.certification.domain.Transaction;
 import org.joda.time.DateTime;
 
 import java.text.ParseException;
@@ -17,8 +17,7 @@ public class RuleEngine {
 	private boolean detectionResult;
 	private DateTime dateTime;
 
-	public void setRulesAttributes(Transaction currentTxn,
-			List<Transaction> historicalTxns) {
+	public RuleEngine(Transaction currentTxn, List<Transaction> historicalTxns) {
 		this.currentTxn = currentTxn;
 		this.historicalTxns = historicalTxns;
 		detectionResult = false;

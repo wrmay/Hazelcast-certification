@@ -38,13 +38,13 @@ public class FraudDetectionImpl extends com.hazelcast.certification.process.Frau
 		ExecutorConfig eConfig = config.getExecutorConfig(EXECUTOR_POOL_NAME);
 		eConfig.setPoolSize(EXECUTOR_POOL_SIZE).setName(EXECUTOR_POOL_NAME).setQueueCapacity(EXECUTOR_QUEUE_CAPACITY);
 		IExecutorService service = HAZELCAST.getExecutorService(EXECUTOR_POOL_NAME);
-		ExecutionCallback callback = new ExecutionCallback() {
-			public void onResponse(Object o) {
+		ExecutionCallback<Boolean> callback = new ExecutionCallback<Boolean>() {
+			public void onResponse(Boolean o) {
 				getTPSCounter().incrementAndGet();
 			}
 
 			public void onFailure(Throwable throwable) {
-
+				log.warning("Executor task failure: "+throwable.getMessage());
 			}
 		};
 		
@@ -52,12 +52,16 @@ public class FraudDetectionImpl extends com.hazelcast.certification.process.Frau
 			try {
 				Transaction txn = getNextTxn();
 				if(txn != null) {
-					//Future<Boolean> future = service.submitToKeyOwner(new com.hazelcast.certification.process.FraudDetectionTask(txn), getClusterKey(txn));
+					//Future<Boolean> future = service.submitToKeyOwner(new com.hazelcast.certification.process.FraudDetectionTask(txn), getClusterKey(txn), callback);
 					//Future<Boolean> future = service.submit(new com.hazelcast.certification.process.FraudDetectionTask(txn));//, getClusterKey(txn));
 					//log.info("Fraud transaction Credit Card ID:" + txn.getCreditCardNumber() + ": " + future.get());
 					//future.get();
 
+					//This is working for TPS of 49k
+					//service.submitToKeyOwner(new com.hazelcast.certification.process.FraudDetectionTask(txn), getClusterKey(txn), callback);
+
 					service.submitToKeyOwner(new com.hazelcast.certification.process.FraudDetectionTask(txn), getClusterKey(txn), callback);
+
 					//getTPSCounter().incrementAndGet();
 				}
 			} catch (InterruptedException e) {
