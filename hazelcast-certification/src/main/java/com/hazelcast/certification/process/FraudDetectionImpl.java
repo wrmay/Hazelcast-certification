@@ -4,6 +4,7 @@ import com.hazelcast.certification.domain.Transaction;
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.ExecutorConfig;
+import com.hazelcast.core.ExecutionCallback;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IExecutorService;
 import com.hazelcast.logging.ILogger;
@@ -21,7 +22,6 @@ public class FraudDetectionImpl extends com.hazelcast.certification.process.Frau
 
 	private final static ILogger log = Logger.getLogger(FraudDetectionImpl.class);
 	private static HazelcastInstance HAZELCAST;
-	private static int EXECUTOR_POOL_SIZE;
 	private final static String EXECUTOR_POOL_NAME = "FraudDetectionService";
 	
 	//Initializing Client with defaults, but add more specific configurations later.
@@ -31,12 +31,22 @@ public class FraudDetectionImpl extends com.hazelcast.certification.process.Frau
 
 	@Override
 	protected void startFraudDetection() {
-		EXECUTOR_POOL_SIZE = Integer.parseInt(System.getProperty("ExecutorPoolSize"));
+		int EXECUTOR_POOL_SIZE = Integer.parseInt(System.getProperty("ExecutorPoolSize"));
+		int EXECUTOR_QUEUE_CAPACITY = Integer.parseInt(System.getProperty("ExecutorQueueCapacity"));
 
 		Config config = new Config();
 		ExecutorConfig eConfig = config.getExecutorConfig(EXECUTOR_POOL_NAME);
-		eConfig.setPoolSize(EXECUTOR_POOL_SIZE).setName(EXECUTOR_POOL_NAME);
+		eConfig.setPoolSize(EXECUTOR_POOL_SIZE).setName(EXECUTOR_POOL_NAME).setQueueCapacity(EXECUTOR_QUEUE_CAPACITY);
 		IExecutorService service = HAZELCAST.getExecutorService(EXECUTOR_POOL_NAME);
+		ExecutionCallback callback = new ExecutionCallback() {
+			public void onResponse(Object o) {
+				getTPSCounter().incrementAndGet();
+			}
+
+			public void onFailure(Throwable throwable) {
+
+			}
+		};
 		
 		while(!Thread.interrupted()) {
 			try {
@@ -47,8 +57,8 @@ public class FraudDetectionImpl extends com.hazelcast.certification.process.Frau
 					//log.info("Fraud transaction Credit Card ID:" + txn.getCreditCardNumber() + ": " + future.get());
 					//future.get();
 
-					service.executeOnKeyOwner(new com.hazelcast.certification.process.FraudDetectionTask(txn), getClusterKey(txn));
-					getTPSCounter().incrementAndGet();
+					service.submitToKeyOwner(new com.hazelcast.certification.process.FraudDetectionTask(txn), getClusterKey(txn), callback);
+					//getTPSCounter().incrementAndGet();
 				}
 			} catch (InterruptedException e) {
 				log.severe(e);
