@@ -11,7 +11,9 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 public class FraudDetectionTask implements Serializable, HazelcastInstanceAware, Callable<Boolean> {
-	
+
+	private static final long serialVersionUID = 4014524872106840633L;
+
 	private transient HazelcastInstance hazelcast;
 
 	private Transaction txn;
