@@ -1,4 +1,4 @@
-package com.hazelcast.certification.process;
+package com.hazelcast.certification.process.impl;
 
 import com.hazelcast.certification.domain.Transaction;
 import com.hazelcast.client.HazelcastClient;
@@ -52,17 +52,17 @@ public class FraudDetectionImpl extends com.hazelcast.certification.process.Frau
 			try {
 				Transaction txn = getNextTxn();
 				if(txn != null) {
-					//Future<Boolean> future = service.submitToKeyOwner(new com.hazelcast.certification.process.FraudDetectionTask(txn), getClusterKey(txn), callback);
-					//Future<Boolean> future = service.submit(new com.hazelcast.certification.process.FraudDetectionTask(txn));//, getClusterKey(txn));
+					//Future<Boolean> future = service.submitToKeyOwner(new com.hazelcast.certification.process.impl.FraudDetectionTask(txn), getClusterKey(txn), callback);
+					//Future<Boolean> future = service.submit(new com.hazelcast.certification.process.impl.FraudDetectionTask(txn));//, getClusterKey(txn));
 					//log.info("Fraud transaction Credit Card ID:" + txn.getCreditCardNumber() + ": " + future.get());
 					//future.get();
 
 					//This is working for TPS of 49k
-					//service.submitToKeyOwner(new com.hazelcast.certification.process.FraudDetectionTask(txn), getClusterKey(txn), callback);
+					//service.submitToKeyOwner(new com.hazelcast.certification.process.impl.FraudDetectionTask(txn), getClusterKey(txn), callback);
 
-					service.submitToKeyOwner(new com.hazelcast.certification.process.FraudDetectionTask(txn), getClusterKey(txn), callback);
 
-					//getTPSCounter().incrementAndGet();
+					service.executeOnKeyOwner(new FraudDetectionTask(txn), getClusterKey(txn));
+					getTPSCounter().incrementAndGet();
 				}
 			} catch (InterruptedException e) {
 				log.severe(e);

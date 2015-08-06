@@ -1,4 +1,4 @@
-package com.hazelcast.certification.process;
+package com.hazelcast.certification.process.impl;
 
 import com.hazelcast.certification.business.ruleengine.RuleEngine;
 import com.hazelcast.certification.data.DataAccessManager;
@@ -8,9 +8,8 @@ import com.hazelcast.core.HazelcastInstanceAware;
 
 import java.io.Serializable;
 import java.util.List;
-import java.util.concurrent.Callable;
 
-public class FraudDetectionTask implements Serializable, HazelcastInstanceAware, Callable<Boolean> {
+public class FraudDetectionTask implements Serializable, HazelcastInstanceAware, Runnable { //Callable<Boolean> {
 
 	private static final long serialVersionUID = 4014524872106840633L;
 
@@ -22,8 +21,8 @@ public class FraudDetectionTask implements Serializable, HazelcastInstanceAware,
 		this.txn = txn;
 	}
 	
-	public Boolean call() throws Exception {
-	//public void run() {
+	//public Boolean call() throws Exception {
+	public void run() {
 
 		DataAccessManager dm = new DataAccessManager();
 		dm.setHazelcastInstance(hazelcast);
@@ -31,7 +30,7 @@ public class FraudDetectionTask implements Serializable, HazelcastInstanceAware,
 		
 		RuleEngine ruleEngine = new RuleEngine(txn, allTxns);
 		ruleEngine.executeRules();
-		return ruleEngine.isFraudTxn();
+		//return ruleEngine.isFraudTxn();
 	}
 
 	public void setHazelcastInstance(HazelcastInstance hazelcastInstance) {
