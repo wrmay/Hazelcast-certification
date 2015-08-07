@@ -32,11 +32,11 @@ public class FraudDetectionImpl extends com.hazelcast.certification.process.Frau
 	@Override
 	protected void startFraudDetection() {
 		int EXECUTOR_POOL_SIZE = Integer.parseInt(System.getProperty("ExecutorPoolSize"));
-		int EXECUTOR_QUEUE_CAPACITY = Integer.parseInt(System.getProperty("ExecutorQueueCapacity"));
+		//int EXECUTOR_QUEUE_CAPACITY = Integer.parseInt(System.getProperty("ExecutorQueueCapacity"));
 
 		Config config = new Config();
 		ExecutorConfig eConfig = config.getExecutorConfig(EXECUTOR_POOL_NAME);
-		eConfig.setPoolSize(EXECUTOR_POOL_SIZE).setName(EXECUTOR_POOL_NAME).setQueueCapacity(EXECUTOR_QUEUE_CAPACITY);
+		eConfig.setPoolSize(EXECUTOR_POOL_SIZE).setName(EXECUTOR_POOL_NAME);//.setQueueCapacity(EXECUTOR_QUEUE_CAPACITY);
 		IExecutorService service = HAZELCAST.getExecutorService(EXECUTOR_POOL_NAME);
 		ExecutionCallback<Boolean> callback = new ExecutionCallback<Boolean>() {
 			public void onResponse(Boolean o) {

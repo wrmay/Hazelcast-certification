@@ -270,13 +270,13 @@ public class FraudDetectionServer {
 			System.setProperty("ExecutorPoolSize", temp);
 		}
 
-		temp = properties.getProperty("ExecutorQueueCapacity");
-		if (temp == null) {
-			log.warning("Missing ExecutorQueueCapacity. Using default of 1000000");
-			System.setProperty("ExecutorQueueCapacity", String.valueOf(1000000));
-		} else {
-			System.setProperty("ExecutorQueueCapacity", temp);
-		}
+//		temp = properties.getProperty("ExecutorQueueCapacity");
+//		if (temp == null) {
+//			log.warning("Missing ExecutorQueueCapacity. Using default of 1000000");
+//			System.setProperty("ExecutorQueueCapacity", String.valueOf(1000000));
+//		} else {
+//			System.setProperty("ExecutorQueueCapacity", temp);
+//		}
 
 		temp = properties.getProperty("ShowCacheStatistics");
 		if (temp == null) {
