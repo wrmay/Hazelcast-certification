@@ -171,7 +171,7 @@ public class FraudDetectionServer {
 				length = length + tmpLength;
 
 				if (healthCheckDegree >= 200) {
-					log.info("Bad Network. Waiting for transactions.");
+//					log.info("Bad Network. Waiting for transactions.");
 					try {
 						Thread.sleep(10);
 					} catch(InterruptedException e) {
