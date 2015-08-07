@@ -12,6 +12,8 @@ import java.io.IOException;
  */
 public class Transaction implements DataSerializable {
 
+	public Transaction() {}
+
 	private String creditCardNumber;
 	private long timeStamp;
 	private String countryCode;
