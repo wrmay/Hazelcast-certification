@@ -12,8 +12,6 @@ import java.io.IOException;
  */
 public class Transaction implements DataSerializable {
 
-	public Transaction() {}
-
 	private String creditCardNumber;
 	private long timeStamp;
 	private String countryCode;
@@ -23,6 +21,8 @@ public class Transaction implements DataSerializable {
 	private String txnCode = "";
 	private String merchantType;
 	private String txnCity;
+
+	public Transaction() {}
 
 	public String getCreditCardNumber() {
 		return creditCardNumber;

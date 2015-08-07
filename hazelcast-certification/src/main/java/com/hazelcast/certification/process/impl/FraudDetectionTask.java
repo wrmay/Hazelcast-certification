@@ -6,20 +6,23 @@ import com.hazelcast.certification.domain.Result;
 import com.hazelcast.certification.domain.Transaction;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceAware;
+import com.hazelcast.nio.ObjectDataInput;
+import com.hazelcast.nio.ObjectDataOutput;
+import com.hazelcast.nio.serialization.DataSerializable;
 
-import java.io.Serializable;
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-public class FraudDetectionTask implements Serializable, HazelcastInstanceAware, Callable<Result> {
-
-	private static final long serialVersionUID = 4014524872106840633L;
+public class FraudDetectionTask implements DataSerializable, HazelcastInstanceAware, Callable<Result> {
 
 	private transient HazelcastInstance hazelcast;
 
 	private Transaction txn;
 
-	FraudDetectionTask(Transaction txn) {
+	public FraudDetectionTask() {}
+
+	void setTransaction(Transaction txn) {
 		this.txn = txn;
 	}
 	
@@ -41,5 +44,13 @@ public class FraudDetectionTask implements Serializable, HazelcastInstanceAware,
 
 	public void setHazelcastInstance(HazelcastInstance hazelcastInstance) {
 		this.hazelcast = hazelcastInstance;
+	}
+
+	public void writeData(ObjectDataOutput objectDataOutput) throws IOException {
+		objectDataOutput.writeObject(txn);
+	}
+
+	public void readData(ObjectDataInput objectDataInput) throws IOException {
+		txn = objectDataInput.readObject();
 	}
 }

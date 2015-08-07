@@ -44,7 +44,7 @@ public class FraudDetectionImpl extends com.hazelcast.certification.process.Frau
 			}
 
 			public void onFailure(Throwable throwable) {
-				log.warning("Executor task failure: "+throwable.getMessage());
+				log.severe("Executor task failure: " + throwable.getMessage());
 			}
 		};
 		
@@ -52,7 +52,9 @@ public class FraudDetectionImpl extends com.hazelcast.certification.process.Frau
 			try {
 				Transaction txn = getNextTxn();
 				if(txn != null) {
-					service.submitToKeyOwner(new FraudDetectionTask(txn), getClusterKey(txn), callback);
+					FraudDetectionTask task = new FraudDetectionTask();
+					task.setTransaction(txn);
+					service.submitToKeyOwner(task, getClusterKey(txn), callback);
 				}
 			} catch (InterruptedException e) {
 				log.severe(e);
