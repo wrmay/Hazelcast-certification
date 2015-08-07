@@ -12,13 +12,9 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.util.Iterator;
-import java.util.Properties;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
  
 public class TransactionsGenerator implements Runnable {
  
@@ -32,14 +28,16 @@ public class TransactionsGenerator implements Runnable {
 
     private final static long TIMEOUT = 10000;
     private int TEST_DURATION = 120;
+    private final static int MAX_CREDITCARD_COUNT = 30000000;
 
-	private AtomicInteger txnCounter = new AtomicInteger();
 	private AtomicBoolean showStopper = new AtomicBoolean();
+    private int COUNT_TRACKER;
      
     private ServerSocketChannel serverChannel;
     private Selector selector;
 
     private TransactionsUtil txnUtil;
+    private static Random TXNCOUNTER = new Random(1);
  
     public TransactionsGenerator(){
         init();
@@ -209,7 +207,12 @@ public class TransactionsGenerator implements Runnable {
 
     private int getNextCounter() {
         //TODO Add Randomness and also for multiple transactions for same credit card
-        return txnCounter.incrementAndGet();
+        if(COUNT_TRACKER == MAX_CREDITCARD_COUNT) {
+            TXNCOUNTER = new Random(1);
+            COUNT_TRACKER = 0;
+        }
+        ++COUNT_TRACKER;
+        return TXNCOUNTER.nextInt(MAX_CREDITCARD_COUNT);
     }
 
     private String getNextTransaction() {
