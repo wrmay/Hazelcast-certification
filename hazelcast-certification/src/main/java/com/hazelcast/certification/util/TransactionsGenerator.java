@@ -206,7 +206,6 @@ public class TransactionsGenerator implements Runnable {
     }
 
     private int getNextCounter() {
-        //TODO Add Randomness and also for multiple transactions for same credit card
         if(COUNT_TRACKER == MAX_CREDITCARD_COUNT) {
             TXNCOUNTER = new Random(1);
             COUNT_TRACKER = 0;

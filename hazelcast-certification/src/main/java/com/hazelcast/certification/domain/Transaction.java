@@ -1,14 +1,16 @@
 package com.hazelcast.certification.domain;
 
-import java.io.Serializable;
+import com.hazelcast.nio.ObjectDataInput;
+import com.hazelcast.nio.ObjectDataOutput;
+import com.hazelcast.nio.serialization.DataSerializable;
+
+import java.io.IOException;
 
 /**
  * Object representation of incoming and historical transaction
  *
  */
-public class Transaction implements Serializable {
-
-	private static final long serialVersionUID = 7567524872106840493L;
+public class Transaction implements DataSerializable {
 
 	private String creditCardNumber;
 	private long timeStamp;
@@ -113,5 +115,29 @@ public class Transaction implements Serializable {
 		sb.append(txnCode);
 		
 		return sb.toString();
+	}
+
+	public void writeData(ObjectDataOutput objectDataOutput) throws IOException {
+		objectDataOutput.writeUTF(creditCardNumber);
+		objectDataOutput.writeLong(timeStamp);
+		objectDataOutput.writeUTF(countryCode);
+		objectDataOutput.writeUTF(responseCode);
+		objectDataOutput.writeUTF(txnAmount);
+		objectDataOutput.writeUTF(txnCurrency);
+		objectDataOutput.writeUTF(txnCode);
+		objectDataOutput.writeUTF(merchantType);
+		objectDataOutput.writeUTF(txnCity);
+	}
+
+	public void readData(ObjectDataInput objectDataInput) throws IOException {
+		creditCardNumber = objectDataInput.readUTF();
+		timeStamp = objectDataInput.readLong();
+		countryCode = objectDataInput.readUTF();
+		responseCode = objectDataInput.readUTF();
+		txnAmount = objectDataInput.readUTF();
+		txnCurrency = objectDataInput.readUTF();
+		txnCode = objectDataInput.readUTF();
+		merchantType = objectDataInput.readUTF();
+		txnCity = objectDataInput.readUTF();
 	}
 }

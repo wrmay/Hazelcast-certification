@@ -2,14 +2,16 @@ package com.hazelcast.certification.process.impl;
 
 import com.hazelcast.certification.business.ruleengine.RuleEngine;
 import com.hazelcast.certification.data.DataAccessManager;
+import com.hazelcast.certification.domain.Result;
 import com.hazelcast.certification.domain.Transaction;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceAware;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.concurrent.Callable;
 
-public class FraudDetectionTask implements Serializable, HazelcastInstanceAware, Runnable { //Callable<Boolean> {
+public class FraudDetectionTask implements Serializable, HazelcastInstanceAware, Callable<Result> {
 
 	private static final long serialVersionUID = 4014524872106840633L;
 
@@ -21,8 +23,7 @@ public class FraudDetectionTask implements Serializable, HazelcastInstanceAware,
 		this.txn = txn;
 	}
 	
-	//public Boolean call() throws Exception {
-	public void run() {
+	public Result call() throws Exception {
 
 		DataAccessManager dm = new DataAccessManager();
 		dm.setHazelcastInstance(hazelcast);
@@ -30,7 +31,12 @@ public class FraudDetectionTask implements Serializable, HazelcastInstanceAware,
 		
 		RuleEngine ruleEngine = new RuleEngine(txn, allTxns);
 		ruleEngine.executeRules();
-		//return ruleEngine.isFraudTxn();
+
+		Result result = new Result();
+		result.setCreditCardNumber(txn.getCreditCardNumber());
+		result.setFraudTransaction(ruleEngine.isFraudTxn());
+
+		return result;
 	}
 
 	public void setHazelcastInstance(HazelcastInstance hazelcastInstance) {

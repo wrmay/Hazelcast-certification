@@ -1,5 +1,6 @@
 package com.hazelcast.certification.process.impl;
 
+import com.hazelcast.certification.domain.Result;
 import com.hazelcast.certification.domain.Transaction;
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.config.Config;
@@ -32,14 +33,13 @@ public class FraudDetectionImpl extends com.hazelcast.certification.process.Frau
 	@Override
 	protected void startFraudDetection() {
 		int EXECUTOR_POOL_SIZE = Integer.parseInt(System.getProperty("ExecutorPoolSize"));
-		//int EXECUTOR_QUEUE_CAPACITY = Integer.parseInt(System.getProperty("ExecutorQueueCapacity"));
 
 		Config config = new Config();
 		ExecutorConfig eConfig = config.getExecutorConfig(EXECUTOR_POOL_NAME);
-		eConfig.setPoolSize(EXECUTOR_POOL_SIZE).setName(EXECUTOR_POOL_NAME);//.setQueueCapacity(EXECUTOR_QUEUE_CAPACITY);
+		eConfig.setPoolSize(EXECUTOR_POOL_SIZE).setName(EXECUTOR_POOL_NAME);
 		IExecutorService service = HAZELCAST.getExecutorService(EXECUTOR_POOL_NAME);
-		ExecutionCallback<Boolean> callback = new ExecutionCallback<Boolean>() {
-			public void onResponse(Boolean o) {
+		ExecutionCallback<Result> callback = new ExecutionCallback<Result>() {
+			public void onResponse(Result o) {
 				getTPSCounter().incrementAndGet();
 			}
 
@@ -52,17 +52,7 @@ public class FraudDetectionImpl extends com.hazelcast.certification.process.Frau
 			try {
 				Transaction txn = getNextTxn();
 				if(txn != null) {
-					//Future<Boolean> future = service.submitToKeyOwner(new com.hazelcast.certification.process.impl.FraudDetectionTask(txn), getClusterKey(txn), callback);
-					//Future<Boolean> future = service.submit(new com.hazelcast.certification.process.impl.FraudDetectionTask(txn));//, getClusterKey(txn));
-					//log.info("Fraud transaction Credit Card ID:" + txn.getCreditCardNumber() + ": " + future.get());
-					//future.get();
-
-					//This is working for TPS of 49k
-					//service.submitToKeyOwner(new com.hazelcast.certification.process.impl.FraudDetectionTask(txn), getClusterKey(txn), callback);
-
-
-					service.executeOnKeyOwner(new FraudDetectionTask(txn), getClusterKey(txn));
-					getTPSCounter().incrementAndGet();
+					service.submitToKeyOwner(new FraudDetectionTask(txn), getClusterKey(txn), callback);
 				}
 			} catch (InterruptedException e) {
 				log.severe(e);
