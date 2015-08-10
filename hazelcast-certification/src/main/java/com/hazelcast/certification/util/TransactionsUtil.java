@@ -1,8 +1,8 @@
 package com.hazelcast.certification.util;
 
 import com.hazelcast.certification.domain.Transaction;
+import org.joda.time.DateTime;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -106,11 +106,10 @@ public class TransactionsUtil {
 
 	// last 90 days
 	private long generateTimeStamp() {
-		long offset = Timestamp.valueOf("2013-01-01 00:00:00").getTime();
-		long end = Timestamp.valueOf("2013-04-01 00:00:00").getTime();
+		long offset = DateTime.now().getMillis();
+		long end = DateTime.now().minusDays(90).getMillis();
 		long diff = end - offset + 1;
-		Timestamp rand = new Timestamp(offset + (long) (Math.random() * diff));
-		return rand.getTime();//toString();
+		return offset + (long) (Math.random() * diff);
 	}
 
 	private String generateTxnCode(int temp) {
