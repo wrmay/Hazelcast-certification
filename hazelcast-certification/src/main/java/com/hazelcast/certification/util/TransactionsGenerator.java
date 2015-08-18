@@ -21,17 +21,18 @@ public class TransactionsGenerator implements Runnable {
 	private final static ILogger log = Logger.getLogger(TransactionsGenerator.class);
 
     private static String URL;
-    
     private static int PORT;
 
     private final static int SIZE_OF_PACKET = 100;
 
     private final static long TIMEOUT = 10000;
     private int TEST_DURATION = 120;
+    private boolean TEST_STARTED;
     private final static int MAX_CREDITCARD_COUNT = 30000000;
 
 	private AtomicBoolean showStopper = new AtomicBoolean();
     private int COUNT_TRACKER;
+    private boolean RANDOM_VALUES;
      
     private ServerSocketChannel serverChannel;
     private Selector selector;
@@ -104,14 +105,25 @@ public class TransactionsGenerator implements Runnable {
             System.exit(0);
         }
         PORT = Integer.parseInt(temp);
+
+        temp = properties.getProperty("RandomValues");
+        if (temp == null) {
+            log.info("No value provided to enable Random generation of Credit Cards. Disabled by default.");
+            RANDOM_VALUES = false;
+        } else {
+            RANDOM_VALUES = true;
+        }
 	}
 
 	private void startTimer() {
-    	new Timer().schedule(new TimerTask() {
-    		public void run() {
-    			showStopper.set(true);
-    		}
-    	}, TimeUnit.SECONDS.toMillis(TEST_DURATION));
+        if(!TEST_STARTED) {
+            new Timer().schedule(new TimerTask() {
+                public void run() {
+                    showStopper.set(true);
+                }
+            }, TimeUnit.SECONDS.toMillis(TEST_DURATION));
+            TEST_STARTED = true;
+        }
     }
 	
 	private boolean shouldStop() {
@@ -198,6 +210,7 @@ public class TransactionsGenerator implements Runnable {
 			e.printStackTrace();
 		}
         socketChannel.finishConnect();
+        log.info("Connection accepted from Fraud Detection Server...");
         startTimer();
     }
  
@@ -207,16 +220,20 @@ public class TransactionsGenerator implements Runnable {
 
     private int getNextCounter() {
         if(COUNT_TRACKER == MAX_CREDITCARD_COUNT) {
-            TXNCOUNTER = new Random(1);
             COUNT_TRACKER = 0;
+            if(RANDOM_VALUES) {
+                TXNCOUNTER = new Random(1);
+            }
         }
-        ++COUNT_TRACKER;
-        return TXNCOUNTER.nextInt(MAX_CREDITCARD_COUNT);
+        if(RANDOM_VALUES) {
+            ++COUNT_TRACKER;
+            return TXNCOUNTER.nextInt(MAX_CREDITCARD_COUNT);
+        }
+        return ++COUNT_TRACKER;
     }
 
     private String getNextTransaction() {
     	int counter = getNextCounter();
-
 		String creditCardNumber = txnUtil.generateCreditCardNumber(counter);
     	return txnUtil.createAndGetCreditCardTransaction(creditCardNumber, counter);
     } 
