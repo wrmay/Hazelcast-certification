@@ -218,15 +218,6 @@ public class TransactionsGenerator implements Runnable {
         key.interestOps(SelectionKey.OP_WRITE);
     }
 
-    private int getOldNextCounter() {
-        if(COUNT_TRACKER == MAX_CREDITCARD_COUNT) {
-            TXNCOUNTER = new Random(1);
-            COUNT_TRACKER = 0;
-        }
-        ++COUNT_TRACKER;
-        return TXNCOUNTER.nextInt(MAX_CREDITCARD_COUNT);
-    }
-
     private int getNextCounter() {
         if(COUNT_TRACKER == MAX_CREDITCARD_COUNT) {
             COUNT_TRACKER = 0;
