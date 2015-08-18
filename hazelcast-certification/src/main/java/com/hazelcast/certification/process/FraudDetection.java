@@ -1,9 +1,10 @@
 package com.hazelcast.certification.process;
 
+import com.hazelcast.certification.domain.Transaction;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
-import com.hazelcast.certification.domain.Transaction;
 
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -26,7 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * <code>processFraudDetection(...)</code> in <b>FraudDetectionProcess</b> within
  * <code>startFraudDetection()</code> <br>
  * 
- * For TPS monitoring, use <code>overallTPS</code> i.e. an AtomicInteger, to increment
+ * For TPS monitoring, use <code>tpsCounter</code> i.e. an AtomicInteger, to increment
  * at appropriate places, where required. The application continuously prints the 
  * TPS for the transactions done in previous 5 seconds, and resets the counter to 0.
  *    
@@ -37,12 +38,16 @@ public abstract class FraudDetection {
 
 	private final static ILogger log = Logger.getLogger(FraudDetection.class);
 
-	private AtomicInteger overallTPS;
+	private AtomicInteger tpsCounter;
 	protected BlockingQueue<String> txnQueue;
-	
+	private List<Integer> allTPSList;
 	public void run() {
 		startPerformanceMonitor();
 		startFraudDetection();
+	}
+
+	public void setAllTPSList(List<Integer> allTPSList) {
+		this.allTPSList = allTPSList;
 	}
 	
 	public void bindTransactionQueue(BlockingQueue<String> queue) {
@@ -50,22 +55,25 @@ public abstract class FraudDetection {
 	}
 	
 	protected AtomicInteger getTPSCounter() {
-		return overallTPS;
+		return tpsCounter;
 	}
 
 	private void startPerformanceMonitor() {
-		overallTPS = new AtomicInteger();
+		tpsCounter = new AtomicInteger();
 		startTPSMonitor();
 	}
 
 	private void startTPSMonitor() {
+		final int tpsInterval = Integer.parseInt(System.getProperty("TPSInterval"));
 		Thread monitor = new Thread() {
 			public void run() {
 				try {
 					while (!Thread.interrupted()) {
-						sleep(5000);
-						log.info("Transactions processed per second = "
-								+ (overallTPS.getAndSet(0) / 5));
+						sleep(tpsInterval * 1000);
+						allTPSList.add(tpsCounter.get() / tpsInterval);
+						log.info("Cluster statistics:\nTransactions pending for Fraud Detection = "+ txnQueue.size()+" \n" +
+						"Transactions processed per second = "
+								+ (tpsCounter.getAndSet(0) / tpsInterval));
 					}
 				} catch (Exception e) {
 					e.printStackTrace();

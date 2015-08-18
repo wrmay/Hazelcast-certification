@@ -16,7 +16,9 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -33,6 +35,7 @@ public class FraudDetectionServer {
 
 	private String FRAUD_DETECTION_IMPL_PROVIDER;
 	private final static int DEFAULT_QUEUE_CAPACITY = 10000;
+	private List<Integer> allTpsList;
 
 	private ByteBuffer clientBuffer;
 	private final static int BUFFER_SIZE = 100;
@@ -70,6 +73,9 @@ public class FraudDetectionServer {
 		}
 		final FraudDetection fraudD = (FraudDetection) fraudDetectionImpl;
 		fraudD.bindTransactionQueue(txnQueue);
+
+		allTpsList = new ArrayList<Integer>();
+		fraudD.setAllTPSList(allTpsList);
 		new Thread() {
 			public void run() {
 				fraudD.run();
@@ -82,7 +88,7 @@ public class FraudDetectionServer {
 		while (!Thread.interrupted()) {
 			connected = connect(new InetSocketAddress(URL, PORT));
 			if (connected) {
-				log.info("Connections Successful...");
+				log.info("Connection with Transactions Generator successful...");
 				return;
 			}
 			try {
@@ -171,7 +177,6 @@ public class FraudDetectionServer {
 				length = length + tmpLength;
 
 				if (healthCheckDegree >= 200) {
-//					log.info("Bad Network. Waiting for transactions.");
 					try {
 						Thread.sleep(10);
 					} catch(InterruptedException e) {
@@ -181,9 +186,7 @@ public class FraudDetectionServer {
 			}
 			clientBuffer.flip();
 			CharBuffer charBuffer = decoder.decode(clientBuffer);
-			//if(length == BUFFER_SIZE) {
-				process(charBuffer.toString());
-			//}
+			process(charBuffer.toString());
 			clientBuffer.clear();
 		} else {
 			handleRemoteSocketTermination();
@@ -194,11 +197,21 @@ public class FraudDetectionServer {
 	private void handleRemoteSocketTermination() {
 		try {
 			channel.close();
+			log.info("Average TPS of this test: "+getFinalAverageTPS());
+			log.info("***** ***** ***** *****");
 			log.warning("Shutdown complete.");
 			System.exit(0);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	private int getFinalAverageTPS() {
+		int count = 0;
+		for(Integer tps : allTpsList) {
+			count += tps;
+		}
+		return count/allTpsList.size();
 	}
 
 	private void write(SelectionKey key) throws IOException {
@@ -276,6 +289,13 @@ public class FraudDetectionServer {
 			temp = "false";
 		}
 		System.setProperty("ShowCacheStatistics", temp);
+
+		temp = properties.getProperty("TPSInterval");
+		if (temp == null) {
+			log.warning("No TPS interval configured. Default of 5 seconds will be used");
+			temp = String.valueOf(5);
+		}
+		System.setProperty("TPSInterval", temp);
 	}
 
 	private void bindQueue() {
