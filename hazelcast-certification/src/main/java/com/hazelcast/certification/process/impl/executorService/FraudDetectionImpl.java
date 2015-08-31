@@ -1,4 +1,4 @@
-package com.hazelcast.certification.process.impl;
+package com.hazelcast.certification.process.impl.executorService;
 
 import com.hazelcast.certification.domain.Result;
 import com.hazelcast.certification.domain.Transaction;
@@ -10,6 +10,8 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IExecutorService;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * This implementation assumes cluster in Client-Server setup. Other
@@ -38,9 +40,10 @@ public class FraudDetectionImpl extends com.hazelcast.certification.process.Frau
 		ExecutorConfig eConfig = config.getExecutorConfig(EXECUTOR_POOL_NAME);
 		eConfig.setPoolSize(EXECUTOR_POOL_SIZE).setName(EXECUTOR_POOL_NAME);
 		IExecutorService service = HAZELCAST.getExecutorService(EXECUTOR_POOL_NAME);
+
 		ExecutionCallback<Result> callback = new ExecutionCallback<Result>() {
-			public void onResponse(Result o) {
-				getTPSCounter().incrementAndGet();
+			public void onResponse(Result r) {
+				registerResult(r);
 			}
 
 			public void onFailure(Throwable throwable) {
@@ -62,6 +65,14 @@ public class FraudDetectionImpl extends com.hazelcast.certification.process.Frau
 				log.info("Bad String received... discarding.");
 			}
 		}
+
+		try {
+			service.shutdown();
+			service.awaitTermination(2, TimeUnit.HOURS);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+
 	}
 
 	private String getClusterKey(Transaction txn) {

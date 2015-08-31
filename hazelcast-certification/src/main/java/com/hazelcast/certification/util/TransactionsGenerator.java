@@ -85,9 +85,9 @@ public class TransactionsGenerator implements Runnable {
 	}
     
 	private void setProperties(Properties properties) {
-		String temp = properties.getProperty("TransactionsGeneratorDuration");
+		String temp = properties.getProperty("Duration");
 		if (temp == null) {
-			log.info("Missing TransactionsGeneratorTestDuration. No test duration provided. Default of 2 mins will be used.");
+			log.info("Missing Duration. No test duration provided. Default of 2 minutes will be used.");
 			return;
 		}
 		this.TEST_DURATION = Integer.parseInt(temp);

@@ -1,5 +1,6 @@
 package com.hazelcast.certification.process;
 
+import com.hazelcast.certification.domain.Result;
 import com.hazelcast.certification.domain.Transaction;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
@@ -41,6 +42,7 @@ public abstract class FraudDetection {
 	private AtomicInteger tpsCounter;
 	protected BlockingQueue<String> txnQueue;
 	private List<Integer> allTPSList;
+
 	public void run() {
 		startPerformanceMonitor();
 		startFraudDetection();
@@ -52,10 +54,6 @@ public abstract class FraudDetection {
 	
 	public void bindTransactionQueue(BlockingQueue<String> queue) {
 		this.txnQueue = queue;
-	}
-	
-	protected AtomicInteger getTPSCounter() {
-		return tpsCounter;
 	}
 
 	private void startPerformanceMonitor() {
@@ -71,7 +69,7 @@ public abstract class FraudDetection {
 					while (!Thread.interrupted()) {
 						sleep(tpsInterval * 1000);
 						allTPSList.add(tpsCounter.get() / tpsInterval);
-						log.info("Cluster statistics:\nTransactions pending for Fraud Detection = "+ txnQueue.size()+" \n" +
+						log.info("Cluster statistics:\nTransactions pending for Fraud Detection = "+ txnQueue.size()+"\n" +
 						"Transactions processed per second = "
 								+ (tpsCounter.getAndSet(0) / tpsInterval));
 					}
@@ -84,8 +82,19 @@ public abstract class FraudDetection {
 		monitor.start();
 	}
 
+	protected void registerResult(Result result) {
+		if(isValidResult(result)) {
+			tpsCounter.incrementAndGet();
+		}
+	}
+
+	private boolean isValidResult(Result result) {
+		return result.getCreditCardNumber() != null;
+	}
+
 	protected Transaction getNextTxn() throws InterruptedException {
-		return prepareTransaction(txnQueue.take());
+		Transaction txn = prepareTransaction(txnQueue.take());
+		return txn;
 	}
 
 	protected Transaction prepareTransaction(String txnString) throws RuntimeException {
