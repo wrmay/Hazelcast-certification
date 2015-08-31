@@ -19,9 +19,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class HistoricalTxnsLoader implements HistoricalTransactionsLoader {
+public class HistoricalTxnsLoaderImpl implements HistoricalTransactionsLoader {
 	
-	private final static ILogger log = Logger.getLogger(HistoricalTxnsLoader.class);
+	private final static ILogger log = Logger.getLogger(HistoricalTxnsLoaderImpl.class);
 
 	private int TOTAL_CREDIT_CARDS, LOADER_THREAD_COUNT, TRANSACTIONS_PER_CARD;
 	private boolean BULK_UPLOAD_ENABLED; 
@@ -30,14 +30,14 @@ public class HistoricalTxnsLoader implements HistoricalTransactionsLoader {
 	
 	private HazelcastInstance hazelcast;
 		
-	HistoricalTxnsLoader() {
+	HistoricalTxnsLoaderImpl() {
 		loadProperties();
 		initialize();
 	}
 	
 	private void loadProperties() {
 		String propFileName = "FraudDetection.properties";
-		InputStream stream = HistoricalTxnsLoader.class.getClassLoader().getResourceAsStream(propFileName);
+		InputStream stream = HistoricalTxnsLoaderImpl.class.getClassLoader().getResourceAsStream(propFileName);
 		if (null == stream) {
 			try {
 				throw new FileNotFoundException("Property file " + propFileName
@@ -107,7 +107,7 @@ public class HistoricalTxnsLoader implements HistoricalTransactionsLoader {
 	}
 
 	public static void main(String args[]) {
-		new HistoricalTxnsLoader().loadHistoricalTransactions();
+		new HistoricalTxnsLoaderImpl().loadHistoricalTransactions();
 	}
 
 
