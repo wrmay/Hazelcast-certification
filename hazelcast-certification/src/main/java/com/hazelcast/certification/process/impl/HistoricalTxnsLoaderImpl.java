@@ -1,5 +1,7 @@
-package com.hazelcast.certification.util;
+package com.hazelcast.certification.process.impl;
 
+import com.hazelcast.certification.process.HistoricalTransactionsLoader;
+import com.hazelcast.certification.util.TransactionsUtil;
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.logging.ILogger;
@@ -17,9 +19,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class HistoricalTxnsLoader {
+public class HistoricalTxnsLoaderImpl implements HistoricalTransactionsLoader {
 	
-	private final static ILogger log = Logger.getLogger(HistoricalTxnsLoader.class);
+	private final static ILogger log = Logger.getLogger(HistoricalTxnsLoaderImpl.class);
 
 	private int TOTAL_CREDIT_CARDS, LOADER_THREAD_COUNT, TRANSACTIONS_PER_CARD;
 	private boolean BULK_UPLOAD_ENABLED; 
@@ -28,14 +30,14 @@ public class HistoricalTxnsLoader {
 	
 	private HazelcastInstance hazelcast;
 		
-	HistoricalTxnsLoader() {
+	HistoricalTxnsLoaderImpl() {
 		loadProperties();
 		initialize();
 	}
 	
 	private void loadProperties() {
 		String propFileName = "FraudDetection.properties";
-		InputStream stream = HistoricalTxnsLoader.class.getClassLoader().getResourceAsStream(propFileName);
+		InputStream stream = HistoricalTxnsLoaderImpl.class.getClassLoader().getResourceAsStream(propFileName);
 		if (null == stream) {
 			try {
 				throw new FileNotFoundException("Property file " + propFileName
@@ -105,21 +107,16 @@ public class HistoricalTxnsLoader {
 	}
 
 	public static void main(String args[]) {
-		try {
-			new HistoricalTxnsLoader().loadHistoricalTxns();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+		new HistoricalTxnsLoaderImpl().loadHistoricalTransactions();
 	}
-	
+
+
 	/**
 	 * Generates credit card accounts and historical transactions for each
 	 * credit card. Each Credit Card is a unique account number. It takes a
 	 * start point for credit card number and total cards to be created
-	 *
-	 * @throws InterruptedException 
 	 */
-	public void loadHistoricalTxns() throws InterruptedException {
+	public void loadHistoricalTransactions() {
 		log.info("Starting to load historical data in Hazelcast servers");
 		CountDownLatch latch = new CountDownLatch(LOADER_THREAD_COUNT);
 		ExecutorService service = Executors.newFixedThreadPool(LOADER_THREAD_COUNT);
@@ -129,7 +126,11 @@ public class HistoricalTxnsLoader {
 			int end = perThread * (i+1);
 			service.execute(new Loader(start, end, latch));
 		}
-		latch.await();
+		try {
+			latch.await();
+		} catch (InterruptedException e) {
+			log.severe(e);
+		}
 		service.shutdown();
 		log.info("Data upload complete. Exiting now.");
 		System.exit(0);

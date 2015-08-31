@@ -197,9 +197,8 @@ public class FraudDetectionServer {
 	private void handleRemoteSocketTermination() {
 		try {
 			channel.close();
-			log.info("Average TPS of this test: "+getFinalAverageTPS());
-			log.info("***** ***** ***** *****");
-			log.warning("Shutdown complete.");
+			log.info("Average TPS of this test: " + getFinalAverageTPS() +
+					"\n***** ***** ***** *****"+"\nShutdown complete");
 			System.exit(0);
 		} catch (IOException e) {
 			e.printStackTrace();

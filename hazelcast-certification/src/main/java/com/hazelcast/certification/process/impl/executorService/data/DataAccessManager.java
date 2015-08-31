@@ -1,4 +1,4 @@
-package com.hazelcast.certification.data;
+package com.hazelcast.certification.process.impl.executorService.data;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
