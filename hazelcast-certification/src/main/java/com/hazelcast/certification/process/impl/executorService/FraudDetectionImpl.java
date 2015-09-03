@@ -53,7 +53,7 @@ public class FraudDetectionImpl extends com.hazelcast.certification.process.Frau
 		
 		while(!Thread.interrupted()) {
 			try {
-				Transaction txn = getNextTxn();
+				Transaction txn = getNextTransaction();
 				if(txn != null) {
 					FraudDetectionTask task = new FraudDetectionTask();
 					task.setTransaction(txn);

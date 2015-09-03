@@ -1,18 +1,13 @@
 package com.hazelcast.certification.process.impl.executorService.data;
 
+import com.hazelcast.certification.domain.Transaction;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
-import com.hazelcast.logging.ILogger;
-import com.hazelcast.logging.Logger;
-import com.hazelcast.certification.domain.Transaction;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class DataAccessManager {
-
-	private final static ILogger log = Logger.getLogger(DataAccessManager.class);
 
 	private HazelcastInstance hazelcast;
 
@@ -29,18 +24,10 @@ public class DataAccessManager {
 		if(allTxns == null) {
 			allTxns = new ArrayList<Transaction>();
 		}
-		allTxns.add(currentTxn);
+		int index = allTxns.size();
+		allTxns.add(index, currentTxn);
 		map.set(currentTxn.getCreditCardNumber(), allTxns);
+		allTxns.remove(index);
 		return allTxns;
 	}
-
-	public void set(String creditCardID, List<Transaction> txns) {
-		IMap<String, List<Transaction>> map = hazelcast.getMap(HAZELCAST_MAP_NAME);
-		map.set(creditCardID, txns);
-	}
-
-	public void setAll(Map<?, ?> data) {
-		hazelcast.getMap(HAZELCAST_MAP_NAME).putAll(data);
-	}
-
 }
