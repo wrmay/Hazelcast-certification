@@ -13,12 +13,14 @@ public class TransactionsUtil {
 	private Random cityCodeRandom;
 	private Random merchantTypeRandom;
 	private Random txnAmountRandom;
+	private Random responseCodeRandom;
 
 	public TransactionsUtil() {
 		countryCodeRandom = new Random(1);
 		cityCodeRandom = new Random(1);
 		merchantTypeRandom = new Random(1);
 		txnAmountRandom = new Random(100);
+		responseCodeRandom = new Random(10);
 	}
 
 	/**
@@ -134,9 +136,8 @@ public class TransactionsUtil {
 
 	// 95% 00 else random 2-bits
 	public String generateResponseCode(int count) {
-		Random random = new Random(10);
 		if (count % 95 == 0)
-			return String.valueOf(random.nextInt(20));
+			return String.valueOf(responseCodeRandom.nextInt(20));
 
 		return "00";
 	}
