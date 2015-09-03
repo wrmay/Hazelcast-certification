@@ -274,21 +274,6 @@ public class FraudDetectionServer {
 			queueCapacity = Integer.parseInt(temp);
 		}
 
-		temp = properties.getProperty("ExecutorPoolSize");
-		if (temp == null) {
-			log.warning("Missing ExecutorPoolSize. Using default of 2");
-			System.setProperty("ExecutorPoolSize", String.valueOf(2));
-		} else {
-			System.setProperty("ExecutorPoolSize", temp);
-		}
-
-		temp = properties.getProperty("ShowCacheStatistics");
-		if (temp == null) {
-			log.warning("Default ShowCacheStatistics used");
-			temp = "false";
-		}
-		System.setProperty("ShowCacheStatistics", temp);
-
 		temp = properties.getProperty("TPSInterval");
 		if (temp == null) {
 			log.warning("No TPS interval configured. Default of 5 seconds will be used");

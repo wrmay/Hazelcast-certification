@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * each Server instance has a dedicated port to receive transactions. <br>
  * All incoming transactions are read on a socket and put in a <b>Blocking Queue
  * </b>. Application can only obtain a credit card transaction from this
- * blocking queue using <code>getNextTxn()</code>. <br>
+ * blocking queue using <code>getNextTransaction()</code>. <br>
  * This app also allows to warm-up the NearCache client by setting a property
  * <code>doWarmup</code> to <code>true</code> in <code>FraudDetection.properties</code>.
  * In such case, <code>warmup()</code> will be invoked before starting the
@@ -43,7 +43,7 @@ public abstract class FraudDetection {
 	protected BlockingQueue<String> txnQueue;
 	private List<Integer> allTPSList;
 
-	public void run() {
+	final public void run() {
 		startPerformanceMonitor();
 		startFraudDetection();
 	}
@@ -82,7 +82,7 @@ public abstract class FraudDetection {
 		monitor.start();
 	}
 
-	protected void registerResult(Result result) {
+	final protected void registerResult(Result result) {
 		if(isValidResult(result)) {
 			tpsCounter.incrementAndGet();
 		}
@@ -92,12 +92,11 @@ public abstract class FraudDetection {
 		return result.getCreditCardNumber() != null;
 	}
 
-	protected Transaction getNextTxn() throws InterruptedException {
-		Transaction txn = prepareTransaction(txnQueue.take());
-		return txn;
+	final protected Transaction getNextTransaction() throws InterruptedException {
+		return prepareTransaction(txnQueue.take());
 	}
 
-	protected Transaction prepareTransaction(String txnString) throws RuntimeException {
+	final protected Transaction prepareTransaction(String txnString) throws RuntimeException {
 		Transaction txn = new Transaction();
 		String[] cName = txnString.split(",");
 		txn.setCreditCardNumber(cName[0]);

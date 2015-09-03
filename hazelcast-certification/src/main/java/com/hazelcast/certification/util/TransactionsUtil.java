@@ -105,14 +105,14 @@ public class TransactionsUtil {
 	}
 
 	// last 90 days
-	private long generateTimeStamp() {
+	public long generateTimeStamp() {
 		long offset = DateTime.now().getMillis();
 		long end = DateTime.now().minusDays(90).getMillis();
 		long diff = end - offset + 1;
 		return offset + (long) (Math.random() * diff);
 	}
 
-	private String generateTxnCode(int temp) {
+	public String generateTxnCode(int temp) {
 		if (temp < 10)
 			return "0000" + temp;
 		if (temp > 10 && temp < 100)
@@ -123,7 +123,7 @@ public class TransactionsUtil {
 	}
 
 	// 001-200
-	private String generateCountryCode() {
+	public String generateCountryCode() {
 		int number = countryCodeRandom.nextInt(200);
 		if (number < 10)
 			return "00" + number;
@@ -133,7 +133,7 @@ public class TransactionsUtil {
 	}
 
 	// 95% 00 else random 2-bits
-	private String generateResponseCode(int count) {
+	public String generateResponseCode(int count) {
 		Random random = new Random(10);
 		if (count % 95 == 0)
 			return String.valueOf(random.nextInt(20));
@@ -142,12 +142,12 @@ public class TransactionsUtil {
 	}
 
 	// 100-50000 random
-	private String generateTxnAmount() {
+	public String generateTxnAmount() {
 		return String.valueOf(txnAmountRandom.nextInt(50000));
 	}
 
 	// 0001-0500
-	private String generateMerchantType() {
+	public String generateMerchantType() {
 		int merchantType = merchantTypeRandom.nextInt(500);
 		if (merchantType < 10)
 			return "000" + merchantType;
@@ -157,7 +157,7 @@ public class TransactionsUtil {
 	}
 
 	// 00001-10000
-	private String generateCityCode() {
+	public String generateCityCode() {
 		int temp = cityCodeRandom.nextInt(10000);
 		if (temp < 10)
 			return "0000" + temp;
