@@ -15,7 +15,35 @@ import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
- 
+
+/**
+ * <p>
+ * Producer class of Transactions which will be consumed by Fraud Detection
+ * process. This prepares comma separated String values and send them over
+ * socket channel. It opens a Server socket channel on a given port and URL,
+ * and waits for consumers to connect. Upon successful connection, it sends
+ * transaction on the channel.
+ *
+ * <br>
+ * There could be many consumers connected to one instance of this class and
+ * each of the consumer connects on a dedicated Socket channel. This class
+ * distributes writing transactions evenly across all connected channels.
+ * Therefore, no 2 channels will have same transactions for Fraud Detection.
+ *
+ * <br>
+ * One cycle generates one unique transaction for 30 million credit cards. Credit
+ * cards are not chosen in sequential manner by default i.e. in each cycle, 30 million
+ * credit cards are selected randomly. However, this is configurable and
+ * setting <code>RandomValues</code> in <I>FraudDetection.properties</I> to <code>false</code> will
+ * enable all credit cards to be selected in sequential order. After completion,
+ * the cycle repeats and new unique transaction created for 30 million credit cards.
+ *
+ * <br>
+ * The generator runs for 2 minutes by default and this duration is configurable,
+ * see <code>FraudDetection.properties</code> for more details.
+ *
+ *
+ */
 public class TransactionsGenerator implements Runnable {
  
 	private final static ILogger log = Logger.getLogger(TransactionsGenerator.class);

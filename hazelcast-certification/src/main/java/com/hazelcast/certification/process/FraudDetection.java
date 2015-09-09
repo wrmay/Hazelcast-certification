@@ -11,28 +11,20 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * <p>
- * This class starts Fraud Detection process.
- * This must extend <code>AbstractFraudDetectionServer</code> that initializes socket
- * connections, queues etc and starts the process of fraud detection by invoking
- * <code>startFraudDetection()</code>. <br>
- * Each Server instance listens to incoming transactions on a specific port i.e.
- * each Server instance has a dedicated port to receive transactions. <br>
- * All incoming transactions are read on a socket and put in a <b>Blocking Queue
- * </b>. Application can only obtain a credit card transaction from this
- * blocking queue using <code>getNextTransaction()</code>. <br>
- * This app also allows to warm-up the NearCache client by setting a property
- * <code>doWarmup</code> to <code>true</code> in <code>FraudDetection.properties</code>.
- * In such case, <code>warmup()</code> will be invoked before starting the
- * process of fraud detection. <br>
- * To start the process of fraud detection for a given transaction, invoke
- * <code>processFraudDetection(...)</code> in <b>FraudDetectionProcess</b> within
- * <code>startFraudDetection()</code> <br>
- * 
- * For TPS monitoring, use <code>tpsCounter</code> i.e. an AtomicInteger, to increment
- * at appropriate places, where required. The application continuously prints the 
- * TPS for the transactions done in previous 5 seconds, and resets the counter to 0.
- *    
- * @author rahul
+ *     This provides framework of Fraud Detection. To begin Fraud Detection process,
+ *     an implementation must be provided that extends this class. The application
+ *     invokes <code>startFraudDetection()</code> that is expected to contain the
+ *     implementation of Fraud Detection process. This method is invoked only once
+ *     and the application will wait if no implementation provided.
+ *
+ * <br>
+ *     To obtain next transaction available for Fraud Detection, invoke <code>getNextTransaction()</code>.
+ *     For every transaction that is consumed for Fraud Detection, <code>registerResult()</code> must be
+ *     called otherwise the transaction stands incomplete.
+ *
+ * <br>
+ *     This class also prints TPS. Frequency of printing TPS or TPS Interval is configurable,
+ *     see <I>FraudDetection.properties</I> for detail. Default TPS Interval is 5 seconds.
  *
  */
 public abstract class FraudDetection {

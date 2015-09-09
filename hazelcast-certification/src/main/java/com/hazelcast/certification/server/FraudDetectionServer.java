@@ -23,6 +23,25 @@ import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * <p>
+ * The main class that starts Fraud Detection process.
+ *
+ * Loads all properties in the system. Each instance of this class makes a socket connection
+ * with <code>TransactionsGenerator</code> running on the given URL and Port. If no instance
+ * found on provided URL and Port, it waits for 3 seconds and tries again, in a loop. After
+ * successful connection, it starts receiving transactions in the form of comma separated
+ * String and puts them on a <i><code>java.util.concurrent.BlockingQueue</code></i> to be consumed by
+ * the implementation of <code>com.hazelcast.certification.process.FraudDetection</code>.
+ * Size of this queue is configurable, see <code>FraudDetection.properties</code> for more details.
+ *
+ * <br>
+ *
+ * After completion of the process, it closes all open socket connections, flushes streams and
+ * closes them and initiates graceful shutdown. At the very end, it also prints the overall
+ * application throughput on console.
+ *
+ */
 public class FraudDetectionServer {
 
 	private final static ILogger log = Logger.getLogger(FraudDetectionServer.class);

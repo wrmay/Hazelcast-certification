@@ -8,7 +8,7 @@ import org.joda.time.DateTime;
 import java.text.ParseException;
 import java.util.List;
 
-public class RuleEngine {
+public final class RuleEngine {
 
 	private final static ILogger log = Logger.getLogger(RuleEngine.class);
 
