@@ -1,0 +1,1 @@
+java -Xms3g -Xmx4g -XX:+UseParallelOldGC -XX:+UseParallelGC -XX:+UseCompressedOops -classpath "/home/rahul/nfs/app/certification/lib/*":/home/rahul/nfs/app/certification/resources com.hazelcast.certification.util.TransactionsGeneratorRunner
