@@ -15,7 +15,6 @@ Provisioning of an AWS environment was automated using [Cloudlab](https://pypi.o
 and Ansible (see the "cloudlab" folder). The instance types selected were
 m5.4x large (16 vCPUs, 64G RAM). A 5 minute run was performed.   
 
-See [this commit]()
 
 Observations from this run:  
 
