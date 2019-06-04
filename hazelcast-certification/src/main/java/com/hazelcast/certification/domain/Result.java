@@ -16,6 +16,11 @@ public class Result implements DataSerializable {
 
     public Result() {}
 
+    public Result( String creditCardNumber, boolean fraudTransaction) {
+        this.fraudTransaction = fraudTransaction;
+        this.creditCardNumber = creditCardNumber;
+    }
+
     public void setFraudTransaction(boolean isFraudTransaction) {
         this.fraudTransaction = isFraudTransaction;
     }

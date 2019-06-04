@@ -68,7 +68,7 @@ public class FraudDetectionServer {
 	}
 
 	private void setup() {
-		clientBuffer = ByteBuffer.allocate(100);
+		clientBuffer = ByteBuffer.allocate(BUFFER_SIZE);
 	}
 
 	private void initializeFraudDetection() {
@@ -121,10 +121,8 @@ public class FraudDetectionServer {
 	private boolean connect(InetSocketAddress address) {
 		try {
 			channel = SocketChannel.open();
-			Socket socket = channel.socket();
-			socket.setKeepAlive(true);
-			socket.setReuseAddress(true);
-			channel.socket().connect(address);
+			channel.connect(address);
+			channel.write(ByteBuffer.wrap(new byte[]{0})); // this crazy thing fixes a problem with read never returning.
 			channel.configureBlocking(false);
 			return true;
 		} catch (Exception e) {
@@ -144,9 +142,10 @@ public class FraudDetectionServer {
 		try {
 			tryChannelSocketConnection();
 			selector = Selector.open();
-			channel.register(selector, SelectionKey.OP_READ);
+			SelectionKey k = channel.register(selector, SelectionKey.OP_READ);
+			read();
 			while (!Thread.interrupted()) {
-				selector.selectNow();
+				int i = selector.select();
 				Iterator<SelectionKey> keys = selector.selectedKeys()
 						.iterator();
 
@@ -157,12 +156,8 @@ public class FraudDetectionServer {
 					if (!key.isValid())
 						continue;
 
-					if (key.isWritable()) {
-						write(key);
-					}
-
 					if (key.isReadable()) {
-						read(key);
+						read();
 					}
 				}
 			}
@@ -181,34 +176,14 @@ public class FraudDetectionServer {
 		}
 	}
 
-	private void read(SelectionKey key) throws IOException {
-		clientBuffer.clear();
-		SocketChannel channel = (SocketChannel) key.channel();
-		int length = channel.read(clientBuffer);
-
-		if (length > 0) {
-			channel.register(selector, SelectionKey.OP_WRITE);
-			int healthCheckDegree = 0;
-			while (length != BUFFER_SIZE) {
-				healthCheckDegree++;
-
-				int tmpLength = channel.read(clientBuffer);
-				length = length + tmpLength;
-
-				if (healthCheckDegree >= 200) {
-					try {
-						Thread.sleep(10);
-					} catch(InterruptedException e) {
-						e.printStackTrace();
-					}
-				}
-			}
+	private void read() throws IOException {
+		channel.read(clientBuffer);
+		while(true){
+			if (clientBuffer.position() < clientBuffer.capacity()) break;  //BREAK
 			clientBuffer.flip();
-			CharBuffer charBuffer = decoder.decode(clientBuffer);
-			process(charBuffer.toString());
+			process(decoder.decode(clientBuffer).toString());
 			clientBuffer.clear();
-		} else {
-			handleRemoteSocketTermination();
+			channel.read(clientBuffer);
 		}
 	}
 
@@ -232,13 +207,13 @@ public class FraudDetectionServer {
 		return count/allTpsList.size();
 	}
 
-	private void write(SelectionKey key) throws IOException {
-		key.interestOps(SelectionKey.OP_READ);
-	}
-
 	private void process(String rawTxnString) {
 		rawTxnString = rawTxnString.substring(0, rawTxnString.length() - 9);
-		txnQueue.offer(rawTxnString);
+		try {
+			txnQueue.put(rawTxnString);  // changed to put to give back pressure
+		} catch(InterruptedException x){
+			log.severe("Interrupted while waiting for queue capacity");
+		}
 	}
 
 	private void loadProperties() {

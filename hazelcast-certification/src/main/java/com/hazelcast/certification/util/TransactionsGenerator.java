@@ -177,9 +177,6 @@ public class TransactionsGenerator implements Runnable {
                     if (key.isWritable()){
                         write(key);
                     }
-                    if (key.isReadable()){
-                        read(key);
-                    }
                 }
             }
             if(shouldStop()) {
@@ -191,21 +188,21 @@ public class TransactionsGenerator implements Runnable {
             closeConnection();
         }
     }
- 
-    private void write(SelectionKey key) throws IOException{
-        SocketChannel channel = (SocketChannel) key.channel();
-        String nextTxn = getNextTransaction();
 
-        ByteBuffer buffer = ByteBuffer.wrap(nextTxn.getBytes());
-        int out = channel.write(buffer);
-        while(out != SIZE_OF_PACKET){
-            int tmpOut = channel.write(buffer);
-            out = out + tmpOut;
-            try {
-                Thread.sleep(10);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+
+    // whenever we enter this method, the buffer must have been filled.  It may be partly written to the channel.
+    private void write(SelectionKey key) throws IOException {
+        SocketChannel channel = (SocketChannel) key.channel();
+        ByteBuffer buffer = (ByteBuffer) key.attachment();
+
+        if (buffer.hasRemaining()) channel.write(buffer);
+
+        while(!buffer.hasRemaining()){
+            buffer.clear();
+            String nextTxn = getNextTransaction();
+            buffer.put(nextTxn.getBytes()); // really should write directly to this buffer while generating txn
+            buffer.flip();
+            channel.write(buffer);
         }
     }
     
@@ -230,22 +227,24 @@ public class TransactionsGenerator implements Runnable {
         ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key.channel();
         SocketChannel socketChannel = serverSocketChannel.accept();
         socketChannel.configureBlocking(false);
-         
-        socketChannel.register(selector, SelectionKey.OP_WRITE);
-        try {
-			Thread.sleep(500);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+
+        ByteBuffer buffer = ByteBuffer.allocate(SIZE_OF_PACKET);
+        SelectionKey keyForServerSocket = socketChannel.register(selector, SelectionKey.OP_WRITE);
+        keyForServerSocket.attach(buffer);
+
         socketChannel.finishConnect();
         log.info("Connection accepted from Fraud Detection Server...");
+
+        // this should be moved off to another thread or this thread will not be able to accept another
+        // connection - but its OK with me right at the moment
+
+        buffer.put(getNextTransaction().getBytes());
+        buffer.flip();
+        write(keyForServerSocket);
+
         startTimer();
     }
  
-    private void read(SelectionKey key) throws IOException{
-        key.interestOps(SelectionKey.OP_WRITE);
-    }
-
     private int getNextCounter() {
         if(COUNT_TRACKER == MAX_CREDITCARD_COUNT) {
             COUNT_TRACKER = 0;
@@ -262,6 +261,7 @@ public class TransactionsGenerator implements Runnable {
 
     private String getNextTransaction() {
     	int counter = getNextCounter();
+    	//if (COUNT_TRACKER % 1000 == 999) log.info("sending txn number " + (COUNT_TRACKER + 1));
 		String creditCardNumber = txnUtil.generateCreditCardNumber(counter);
     	return txnUtil.createAndGetCreditCardTransaction(creditCardNumber, counter);
     } 

@@ -4,6 +4,7 @@ import com.hazelcast.certification.domain.Result;
 import com.hazelcast.certification.domain.Transaction;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
+import com.hazelcast.map.merge.PassThroughMergePolicy;
 
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -77,6 +78,8 @@ public abstract class FraudDetection {
 	final protected void registerResult(Result result) {
 		if(isValidResult(result)) {
 			tpsCounter.incrementAndGet();
+		} else {
+			log.warning("INVALID RESULT");
 		}
 	}
 

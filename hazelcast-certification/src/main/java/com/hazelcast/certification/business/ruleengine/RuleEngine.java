@@ -511,9 +511,11 @@ public final class RuleEngine {
 				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
 			}
 		}
-		if (Integer.parseInt(currentTxn.getTxnAmt()) > (n_txn_amt / count)
-				|| n_txn_amt > 20000)
-			detectionResult = true;
+		if (count > 0) {
+			if (Integer.parseInt(currentTxn.getTxnAmt()) > (n_txn_amt / count)
+					|| n_txn_amt > 20000)
+				detectionResult = true;
+		}
 
 	}
 
@@ -530,9 +532,12 @@ public final class RuleEngine {
 				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
 			}
 		}
-		if (Integer.parseInt(currentTxn.getTxnAmt()) > (n_txn_amt / count)
-				|| n_txn_amt > 100000)
-			detectionResult = true;
+
+		if (count > 0) {
+			if (Integer.parseInt(currentTxn.getTxnAmt()) > (n_txn_amt / count)
+					|| n_txn_amt > 100000)
+				detectionResult = true;
+		}
 
 	}
 
@@ -549,9 +554,12 @@ public final class RuleEngine {
 				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
 			}
 		}
-		if (Integer.parseInt(currentTxn.getTxnAmt()) > (n_txn_amt / count)
-				|| n_txn_amt > 200000)
-			detectionResult = true;
+
+		if (count > 0) {
+			if (Integer.parseInt(currentTxn.getTxnAmt()) > (n_txn_amt / count)
+					|| n_txn_amt > 200000)
+				detectionResult = true;
+		}
 
 	}
 
@@ -568,9 +576,12 @@ public final class RuleEngine {
 				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
 			}
 		}
-		if (Integer.parseInt(currentTxn.getTxnAmt()) > (n_txn_amt / count)
-				|| n_txn_amt > 330000)
-			detectionResult = true;
+
+		if (count > 0) {
+			if (Integer.parseInt(currentTxn.getTxnAmt()) > (n_txn_amt / count)
+					|| n_txn_amt > 330000)
+				detectionResult = true;
+		}
 
 	}
 
@@ -587,9 +598,12 @@ public final class RuleEngine {
 				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
 			}
 		}
-		if (Integer.parseInt(currentTxn.getTxnAmt()) > (n_txn_amt / count)
-				|| n_txn_amt > 1110000)
-			detectionResult = true;
+
+		if (count > 0) {
+			if (Integer.parseInt(currentTxn.getTxnAmt()) > (n_txn_amt / count)
+					|| n_txn_amt > 1110000)
+				detectionResult = true;
+		}
 
 	}
 
