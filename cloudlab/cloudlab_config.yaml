@@ -1,0 +1,15 @@
+---
+  region: us-east-2
+  servers:
+    - instance_type: m5.4xlarge
+      private_ip_addresses: [101]
+      roles:
+        - TxnGenerator
+    - instance_type: m5.4xlarge
+      private_ip_addresses: [102]
+      roles:
+        - FraudProcessor
+  open_ports:
+    TxnGenerator:
+      - 8511
+    FraudProcessor: []  # no open ports (except ssh)
