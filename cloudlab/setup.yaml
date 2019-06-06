@@ -18,6 +18,9 @@
             - maven
             - nc
 
+  - hosts: TxnGenerator
+    remote_user: ec2-user
+    tasks:
       - name: copy project files to servers
         become: no
         copy:
@@ -33,5 +36,97 @@
       - name: copy config files and scripts into place
         become: no
         copy:
-          src: resources/
+          src: resources/TxnGenerator/
           dest: /home/ec2-user/hazelcast-certification
+
+      - name: download the Prometheus java exporter
+        become: no
+        get_url:
+          url: https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.11.0/jmx_prometheus_javaagent-0.11.0.jar
+          dest: /home/ec2-user/hazelcast-certification/
+
+  - hosts: FraudProcessor
+    remote_user: ec2-user
+    tasks:
+      - name: copy project files to servers
+        become: no
+        copy:
+          src: "../hazelcast-certification"
+          dest: "/home/ec2-user"
+
+      - name: build the project
+        become: no
+        shell: mvn package -DskipTests
+        args:
+          chdir: /home/ec2-user/hazelcast-certification
+
+      - name: copy config files and scripts into place
+        become: no
+        copy:
+          src: resources/FraudProcessor/
+          dest: /home/ec2-user/hazelcast-certification
+
+      - name: download the Prometheus java exporter
+        become: no
+        get_url:
+          url: https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.11.0/jmx_prometheus_javaagent-0.11.0.jar
+          dest: /home/ec2-user/hazelcast-certification/
+
+  - hosts: Prometheus
+    remote_user: ec2-user
+    tasks:
+      - name: install pip
+        become: yes
+        yum:
+          name: python-pip
+
+      # - name: install grafana
+      #   become: yes
+      #   yum:
+      #     name: https://dl.grafana.com/oss/release/grafana-6.2.2-1.x86_64.rpm
+
+      - name: install supervisor python package
+        become: yes
+        pip:
+          name: supervisor
+
+      - name: make the hazelcast certification directory
+        become: no
+        file:
+          path: /home/ec2-user/hazelcast-certification
+          state: directory
+
+      - name: download Prometheus
+        become: no
+        unarchive:
+          remote_src: yes
+          src: https://github.com/prometheus/prometheus/releases/download/v2.10.0/prometheus-2.10.0.linux-amd64.tar.gz
+          dest: /home/ec2-user/
+
+      - name: copy the supervisord config file to the server
+        become: no
+        copy:
+          src: resources/Prometheus/supervisord.conf
+          dest: /home/ec2-user/supervisord.conf
+
+      - name: generate the prometheus config
+        become: no
+        template:
+          src: resources/Prometheus/prometheus.yml.j2
+          dest: /home/ec2-user/prometheus.yml
+          lstrip_blocks: yes
+          trim_blocks: yes
+
+      - name: start supervisord (fail if already running)
+        shell: supervisord -c /home/ec2-user/supervisord.conf
+        args:
+          chdir: /home/ec2-user
+        ignore_errors: yes
+
+      - name: stop Prometheus
+        become: no
+        shell: supervisorctl stop prometheus
+
+      - name: start Prometheus
+        become: no
+        shell: supervisorctl start prometheus

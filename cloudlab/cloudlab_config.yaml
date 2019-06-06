@@ -5,11 +5,18 @@
       private_ip_addresses: [101]
       roles:
         - TxnGenerator
+        
     - instance_type: m5.4xlarge
       private_ip_addresses: [102]
       roles:
         - FraudProcessor
+
+    - instance_type: m5.2xlarge
+      private_ip_addresses: [111]
+      roles:
+        - Prometheus
+
   open_ports:
-    TxnGenerator:
-      - 8511
-    FraudProcessor: []  # no open ports (except ssh)
+    TxnGenerator: [8511, 8888]
+    FraudProcessor: [8888]
+    Prometheus: [9090, 3000]

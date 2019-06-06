@@ -22,6 +22,7 @@ public final class RuleEngine {
 		this.historicalTxns = historicalTxns;
 		detectionResult = false;
 
+
 		dateTime = new DateTime(currentTxn.getTimeStamp());
 	}
 

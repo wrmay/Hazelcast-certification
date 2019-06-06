@@ -8,17 +8,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -54,11 +50,12 @@ public class FraudDetectionServer {
 
 	private String FRAUD_DETECTION_IMPL_PROVIDER;
 	private final static int DEFAULT_QUEUE_CAPACITY = 10000;
-	private List<Integer> allTpsList;
 
 	private ByteBuffer clientBuffer;
 	private final static int BUFFER_SIZE = 100;
 	private static CharsetDecoder decoder = Charset.forName("ASCII").newDecoder();
+
+	private FraudDetection fraudDetectionImpl;
 
 	public FraudDetectionServer() {
 		setup();
@@ -72,10 +69,8 @@ public class FraudDetectionServer {
 	}
 
 	private void initializeFraudDetection() {
-		Object fraudDetectionImpl = null;
 		try {
-			fraudDetectionImpl = Class.forName(FRAUD_DETECTION_IMPL_PROVIDER)
-					.newInstance();
+			fraudDetectionImpl = (FraudDetection) Class.forName(FRAUD_DETECTION_IMPL_PROVIDER).newInstance();
 		} catch (InstantiationException e) {
 			log.severe("Error Initializing FraudDetectionImpl", e);
 		} catch (IllegalAccessException e) {
@@ -85,24 +80,17 @@ public class FraudDetectionServer {
 		} catch (ClassNotFoundException e) {
 			log.severe("Can not locate implementation of FraudDetection", e);
 		}
-		if (fraudDetectionImpl == null
-				|| !(fraudDetectionImpl instanceof FraudDetection)) {
+		if (fraudDetectionImpl == null) {
 			log.severe("Invalid FraudDetection implementation provided. The implementation must extend FraudDetection. Exiting...");
 			System.exit(0);
 		}
-		final FraudDetection fraudD = (FraudDetection) fraudDetectionImpl;
-		fraudD.bindTransactionQueue(txnQueue);
 
-		allTpsList = new ArrayList<Integer>();
-		fraudD.setAllTPSList(allTpsList);
-		new Thread() {
-			public void run() {
-				fraudD.run();
-			}
-		}.start();
+		fraudDetectionImpl.bindTransactionQueue(txnQueue);
+
+		fraudDetectionImpl.start();
 	}
 
-	private void tryChannelSocketConnection() throws IOException {
+	private void tryChannelSocketConnection()  {
 		boolean connected;
 		while (!Thread.interrupted()) {
 			connected = connect(new InetSocketAddress(URL, PORT));
@@ -142,10 +130,10 @@ public class FraudDetectionServer {
 		try {
 			tryChannelSocketConnection();
 			selector = Selector.open();
-			SelectionKey k = channel.register(selector, SelectionKey.OP_READ);
+			channel.register(selector, SelectionKey.OP_READ);
 			read();
 			while (!Thread.interrupted()) {
-				int i = selector.select();
+				selector.select();
 				Iterator<SelectionKey> keys = selector.selectedKeys()
 						.iterator();
 
@@ -171,6 +159,7 @@ public class FraudDetectionServer {
 	private void close() {
 		try {
 			selector.close();
+			fraudDetectionImpl.shutdown();
 		} catch (IOException e) {
 			log.severe(e);
 		}
@@ -185,26 +174,6 @@ public class FraudDetectionServer {
 			clientBuffer.clear();
 			channel.read(clientBuffer);
 		}
-	}
-
-
-	private void handleRemoteSocketTermination() {
-		try {
-			channel.close();
-			log.info("Average TPS of this test: " + getFinalAverageTPS() +
-					"\n***** ***** ***** *****"+"\nShutdown complete");
-			System.exit(0);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
-	private int getFinalAverageTPS() {
-		int count = 0;
-		for(Integer tps : allTpsList) {
-			count += tps;
-		}
-		return count/allTpsList.size();
 	}
 
 	private void process(String rawTxnString) {
@@ -280,7 +249,7 @@ public class FraudDetectionServer {
 		txnQueue = TransactionQueue.getTransactionQueue(queueCapacity);
 	}
 
-	public static void main(String args[]) {
+	public static void main(String []args) {
 		new FraudDetectionServer().run();
 	}
 }
