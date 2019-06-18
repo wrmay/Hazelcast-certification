@@ -1,0 +1,7 @@
+---
+  - hosts: RawTransactionSource
+    remote_user: ec2-user
+    become: no
+    tasks:
+      - name: start the raw transaction source
+        shell: supervisorctl start rts

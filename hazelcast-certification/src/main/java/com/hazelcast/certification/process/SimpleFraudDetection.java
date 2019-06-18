@@ -6,10 +6,7 @@ import com.hazelcast.certification.domain.Transaction;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class SimpleFraudDetection extends FraudDetection  {
 
@@ -22,7 +19,7 @@ public class SimpleFraudDetection extends FraudDetection  {
     protected void handle(Transaction t) {
         List<Transaction> txnList = cardHistory.get(t.getCreditCardNumber());
         if (txnList == null){
-            txnList = new ArrayList<Transaction>(100);
+            txnList = new LinkedList<Transaction>();
             cardHistory.put(t.getCreditCardNumber(), txnList);
         }
 

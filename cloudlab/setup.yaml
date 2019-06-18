@@ -10,22 +10,25 @@
   - hosts: all
     remote_user: ec2-user
     tasks:
-      - name: install java, maven, nc
+      - name: install java, maven, nc, pip
         become: yes
         yum:
           name:
             - java-devel
             - maven
             - nc
+            - python-pip
 
-  - hosts: TxnGenerator
-    remote_user: ec2-user
-    tasks:
+      - name: install supervisor python package
+        become: yes
+        pip:
+          name: supervisor
+
       - name: copy project files to servers
         become: no
         copy:
           src: "../hazelcast-certification"
-          dest: "/home/ec2-user"
+          dest: "/home/ec2-user/"
 
       - name: build the project
         become: no
@@ -33,6 +36,20 @@
         args:
           chdir: /home/ec2-user/hazelcast-certification
 
+  - hosts: ManCenter
+    remote_user: ec2-user
+    become: no
+    tasks:
+      - name: download and unpack Hazelcast management center
+        unarchive:
+          src: https://download.hazelcast.com/management-center/hazelcast-management-center-3.12.tar.gz
+          remote_src: yes
+          dest: /home/ec2-user
+
+
+  - hosts: [ TxnGenerator]
+    remote_user: ec2-user
+    tasks:
       - name: copy config files and scripts into place
         become: no
         copy:
@@ -45,25 +62,13 @@
           url: https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.11.0/jmx_prometheus_javaagent-0.11.0.jar
           dest: /home/ec2-user/hazelcast-certification/
 
-  - hosts: FraudProcessor
+  - hosts: ClusterMember
     remote_user: ec2-user
     tasks:
-      - name: copy project files to servers
-        become: no
-        copy:
-          src: "../hazelcast-certification"
-          dest: "/home/ec2-user"
-
-      - name: build the project
-        become: no
-        shell: mvn package -DskipTests
-        args:
-          chdir: /home/ec2-user/hazelcast-certification
-
       - name: copy config files and scripts into place
         become: no
         copy:
-          src: resources/FraudProcessor/
+          src: resources/ClusterMember/
           dest: /home/ec2-user/hazelcast-certification
 
       - name: download the Prometheus java exporter
@@ -72,6 +77,22 @@
           url: https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.11.0/jmx_prometheus_javaagent-0.11.0.jar
           dest: /home/ec2-user/hazelcast-certification/
 
+      - name: start supervisord (fail if already running)
+        shell: supervisord -c /home/ec2-user/hazelcast-certification/supervisord.conf
+        args:
+          chdir: /home/ec2-user
+        ignore_errors: yes
+
+      # this is done so that, on repeated runs, new config will be picked up
+      - name: stop cluster member
+        shell: supervisorctl  -c /home/ec2-user/hazelcast-certification/supervisord.conf stop hzmember
+
+      - name: start cluster member
+        shell: supervisorctl  -c /home/ec2-user/hazelcast-certification/supervisord.conf start hzmember
+
+ # This could be improved because right now this block set up mancenter as
+ # well. This is due to the fact that they both have a supervisord config and
+ # one was overwriting the other.  
   - hosts: Prometheus
     remote_user: ec2-user
     tasks:
@@ -130,3 +151,9 @@
       - name: start Prometheus
         become: no
         shell: supervisorctl start prometheus
+
+      - name: stop mancenter
+        shell: supervisorctl stop mancenter
+
+      - name: start mancenter
+        shell: supervisorctl start mancenter

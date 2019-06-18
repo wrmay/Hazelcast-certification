@@ -89,4 +89,25 @@ public class SimpleFraudDetection extends FraudDetection  {
 
 ```
 
+Changing this data structure to a LinkedList and not pre-sizing resulted in a slightly better run.  Best result to date:
 
+```
+Transactions Processed: 31729093
+Elapsed time: 301s
+Overall TPS is: 105129
+```
+
+This tells us that a single thread should be able to perform about 100k fraud detection operations/sec.
+
+Drawbacks of this solution:
+
+- More credit cards requires a larger fraud processor JVM. We are probably close to the practical limit with 30 million cards.
+- It's not fault tolerant
+- The fraud detection server is a single thread.  It doesn't scale up.
+- It is not fault tolerant.
+
+Time for Hazelcast.
+
+In the next iteration, the fraud detection process and the card histories will be hosted in Hazelcast. The initial design will be
+
+- TBD

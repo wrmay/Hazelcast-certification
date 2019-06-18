@@ -1,0 +1,25 @@
+---
+  - hosts: ClusterMember
+    remote_user: ec2-user
+    become: no
+    tasks:
+      - name: stop the cluster members
+        shell: supervisorctl stop hzmember
+
+      - name: copy project files to servers
+        copy:
+          src: "{{ item.src }}"
+          dest: "{{ item.dest }}"
+        loop:
+          - src: ../src
+            dest: /home/ec2-user/code
+          - src: ../pom.xml
+            dest: /home/ec2-user/code
+
+      - name: build the project
+        shell: mvn package -DskipTests
+        args:
+          chdir: /home/ec2-user/code
+
+      - name: start the cluster members
+        shell: supervisorctl start hzmember

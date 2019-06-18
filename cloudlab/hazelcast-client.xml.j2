@@ -1,0 +1,19 @@
+<hazelcast-client xmlns="http://www.hazelcast.com/schema/client-config"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://www.hazelcast.com/schema/client-config
+                  https://hazelcast.com/schema/client-config/hazelcast-client-config-3.12.xsd">
+
+
+
+  <network>
+    <cluster-members>
+{% for host in groups['ClusterMember']%}
+      <address>{{ hostvars[host].dns_name }}:5701</address>
+{% endfor %}
+    </cluster-members>
+  </network>
+
+  <connection-strategy async-start="false" reconnect-mode="ON" />
+
+
+</hazelcast-client>

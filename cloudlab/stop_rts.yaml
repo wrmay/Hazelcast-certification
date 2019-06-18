@@ -1,0 +1,7 @@
+---
+  - hosts: RawTransactionSource
+    remote_user: ec2-user
+    become: no
+    tasks:
+      - name: stop the raw transaction source
+        shell: supervisorctl stop rts

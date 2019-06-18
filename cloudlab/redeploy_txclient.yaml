@@ -1,0 +1,25 @@
+---
+  - hosts: TransactionClient
+    remote_user: ec2-user
+    become: no
+    tasks:
+      - name: stop the transaction client
+        shell: supervisorctl stop txclient
+
+      - name: copy project files to servers
+        copy:
+          src: "{{ item.src }}"
+          dest: "{{ item.dest }}"
+        loop:
+          - src: ../src
+            dest: /home/ec2-user/code
+          - src: ../pom.xml
+            dest: /home/ec2-user/code
+
+      - name: build the project
+        shell: mvn package
+        args:
+          chdir: /home/ec2-user/code
+
+      - name: start the transaction client
+        shell: supervisorctl start txclient
