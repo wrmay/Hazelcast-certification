@@ -1,0 +1,24 @@
+<hazelcast xmlns="http://www.hazelcast.com/schema/config"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://www.hazelcast.com/schema/config
+           http://www.hazelcast.com/schema/config/hazelcast-config-3.12.xsd">
+
+    <license-key>ENTERPRISE_HD#10Nodes#OSfKjNJuFrHlmkb6ywE0A7Ta5VIU11690000911301101000124101010191</license-key>
+
+    <network>
+        <join>
+            <multicast enabled="false"/>
+            <tcp-ip enabled="true">
+                <member>localhost</member>
+            </tcp-ip>
+        </join>
+    </network>
+
+    <map name="transaction_history">
+        <map-store enabled="true" initial-mode="EAGER">
+            <class-name>com.hazelcast.certification.util.TransactionMapLoader</class-name>
+        </map-store>
+    </map>
+
+    <management-center enabled="true">http://localhost:8080/hazelcast-mancenter</management-center>
+</hazelcast>

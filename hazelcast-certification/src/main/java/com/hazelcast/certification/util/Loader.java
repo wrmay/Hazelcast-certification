@@ -13,7 +13,7 @@ public class Loader {
         MultiMap<String, List<Transaction>> transactions = hz.getMultiMap("transactions");
 
         TransactionsUtil txnGenerator = new TransactionsUtil();
-        int cards = 30000000;
+        int cards = 1000000;
         int txnsPerCard = 20;
 
         for(int i=0;i < cards; ++i){

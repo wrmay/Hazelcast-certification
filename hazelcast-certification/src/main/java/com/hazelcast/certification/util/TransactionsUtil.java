@@ -4,6 +4,7 @@ import com.hazelcast.certification.domain.Transaction;
 import org.joda.time.DateTime;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
@@ -60,9 +61,9 @@ public class TransactionsUtil {
 	 *            number of historical transactions to create
 	 * @return List of transactions for a credit card
 	 */
-	public List<Transaction> createAndGetCreditCardTransactions(
+	public LinkedList<Transaction> createAndGetCreditCardTransactions(
 			String creditCardNumber, int txnCount) {
-		List<Transaction> transactions = new ArrayList<Transaction>();
+		LinkedList<Transaction> transactions = new LinkedList<Transaction>();
 		for (int j = 0; j < txnCount; j++) {
 
 			Transaction txn = new Transaction();

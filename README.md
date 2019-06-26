@@ -70,7 +70,7 @@ public class SimpleFraudDetection extends FraudDetection  {
     protected void handle(Transaction t) {
         List<Transaction> txnList = cardHistory.get(t.getCreditCardNumber());
         if (txnList == null){
-          
+
           	/*** THE CULPRIT BELOW ***/
             txnList = new ArrayList<Transaction>(100);  
             cardHistory.put(t.getCreditCardNumber(), txnList);
@@ -108,6 +108,17 @@ Drawbacks of this solution:
 
 Time for Hazelcast.
 
-In the next iteration, the fraud detection process and the card histories will be hosted in Hazelcast. The initial design will be
+# Loader
+1M card histories were generated and loaded into a 2 node cluster.  It was
+rather slow.  1M cards consumed roughly 10G in each JVM, so we could expect
+30M to require 600G all together.  If each JVM can hold 20G then we would
+need 30 machines to hold the data.  Hmmm.... the servers would cost 11.52/hour.
 
-- TBD
+I need to make the loading faster for practical reasons.
+
+# Iteration HZ 1
+
+Leave the transaction source as is. In the original challenge, the problem is not posed as request response.  The challenge appears to be to consume transactions from transaction source, run them through scorer and call "register".  The job is considered done if the scoring has been run and the counter has been incremented.
+
+
+
