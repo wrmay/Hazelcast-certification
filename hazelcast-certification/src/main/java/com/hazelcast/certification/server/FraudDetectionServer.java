@@ -1,6 +1,11 @@
 package com.hazelcast.certification.server;
 
+import com.hazelcast.certification.domain.CreditCardKey;
+import com.hazelcast.certification.domain.Transaction;
 import com.hazelcast.certification.process.FraudDetection;
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.durableexecutor.DurableExecutorService;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 
@@ -44,8 +49,6 @@ public class FraudDetectionServer {
 	private Selector selector;
 	private int PORT;
 	private String URL;
-	private BlockingQueue<String> txnQueue;
-	private int queueCapacity;
 	private SocketChannel channel;
 
 	private String FRAUD_DETECTION_IMPL_PROVIDER;
@@ -56,39 +59,18 @@ public class FraudDetectionServer {
 	private static CharsetDecoder decoder = Charset.forName("ASCII").newDecoder();
 
 	private FraudDetection fraudDetectionImpl;
+	private HazelcastInstance hazelcast;
+	private DurableExecutorService executor;
 
 	public FraudDetectionServer() {
-		setup();
-		loadProperties();
-		bindQueue();
-		initializeFraudDetection();
-	}
+		hazelcast = Hazelcast.newHazelcastInstance();
+		hazelcast.getMap("transaction_history");
+		executor = hazelcast.getDurableExecutorService("fraud_checker");
 
-	private void setup() {
+		loadProperties();
 		clientBuffer = ByteBuffer.allocate(BUFFER_SIZE);
 	}
 
-	private void initializeFraudDetection() {
-		try {
-			fraudDetectionImpl = (FraudDetection) Class.forName(FRAUD_DETECTION_IMPL_PROVIDER).newInstance();
-		} catch (InstantiationException e) {
-			log.severe("Error Initializing FraudDetectionImpl", e);
-		} catch (IllegalAccessException e) {
-			log.severe(
-					"Can not access definition of implementation of FraudDetection",
-					e);
-		} catch (ClassNotFoundException e) {
-			log.severe("Can not locate implementation of FraudDetection", e);
-		}
-		if (fraudDetectionImpl == null) {
-			log.severe("Invalid FraudDetection implementation provided. The implementation must extend FraudDetection. Exiting...");
-			System.exit(0);
-		}
-
-		fraudDetectionImpl.bindTransactionQueue(txnQueue);
-
-		fraudDetectionImpl.start();
-	}
 
 	private void tryChannelSocketConnection()  {
 		boolean connected;
@@ -149,7 +131,7 @@ public class FraudDetectionServer {
 					}
 				}
 			}
-		} catch (IOException e) {
+		} catch (Exception e) {
 			log.severe(e);
 		} finally {
 			close();
@@ -166,24 +148,37 @@ public class FraudDetectionServer {
 	}
 
 	private void read() throws IOException {
+		String txnString;
 		channel.read(clientBuffer);
-		while(true){
-			if (clientBuffer.position() < clientBuffer.capacity()) break;  //BREAK
+		if (clientBuffer.position() == clientBuffer.capacity()){
 			clientBuffer.flip();
-			process(decoder.decode(clientBuffer).toString());
+			txnString = decoder.decode(clientBuffer).toString();
 			clientBuffer.clear();
-			channel.read(clientBuffer);
+			process(txnString);
 		}
 	}
 
+	// should we farm this out to a thread pool ??
 	private void process(String rawTxnString) {
-		rawTxnString = rawTxnString.substring(0, rawTxnString.length() - 9);
-		try {
-			txnQueue.put(rawTxnString);  // changed to put to give back pressure
-		} catch(InterruptedException x){
-			log.severe("Interrupted while waiting for queue capacity");
-		}
+		Transaction t = prepareTransaction(rawTxnString.substring(0, rawTxnString.length() - 9));
+		TransactionScoringTask task = new TransactionScoringTask(t);
+		executor.submitToKeyOwner(task, new CreditCardKey(t.getCreditCardNumber()));
 	}
+
+	final protected Transaction prepareTransaction(String txnString) throws RuntimeException {
+		Transaction txn = new Transaction();
+		String[] cName = txnString.split(",");
+		txn.setCreditCardNumber(cName[0]);
+		txn.setTimeStamp(Long.parseLong(cName[1]));
+		txn.setCountryCode(cName[2]);
+		txn.setResponseCode(cName[3]);
+		txn.setTxnAmt(cName[4]);
+		txn.setMerchantType(cName[6]);
+		txn.setTxnCity(cName[7]);
+		txn.setTxnCode(cName[8]);
+		return txn;
+	}
+
 
 	private void loadProperties() {
 		String propFileName = "FraudDetection.properties";
@@ -228,14 +223,6 @@ public class FraudDetectionServer {
 		}
 		this.URL = temp;
 
-		temp = properties.getProperty("QueueCapacity");
-		if (temp == null) {
-			log.warning("Missing QueueCapacity. Using default of "
-					+ DEFAULT_QUEUE_CAPACITY);
-			queueCapacity = DEFAULT_QUEUE_CAPACITY;
-		} else {
-			queueCapacity = Integer.parseInt(temp);
-		}
 
 		temp = properties.getProperty("TPSInterval");
 		if (temp == null) {
@@ -245,11 +232,17 @@ public class FraudDetectionServer {
 		System.setProperty("TPSInterval", temp);
 	}
 
-	private void bindQueue() {
-		txnQueue = TransactionQueue.getTransactionQueue(queueCapacity);
-	}
 
 	public static void main(String []args) {
-		new FraudDetectionServer().run();
+		FraudDetectionServer server = new FraudDetectionServer();
+		log.info("Waiting 10s for other cluster members to join.");
+		try {
+			Thread.sleep(10000);
+		} catch (InterruptedException x){
+			//
+		}
+
+		// start processing transactions.
+		server.run();
 	}
 }

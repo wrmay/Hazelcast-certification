@@ -13,8 +13,6 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * <p>
@@ -45,7 +43,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  */
 public class TransactionsGenerator implements Runnable {
- 
+
 	private final static ILogger log = Logger.getLogger(TransactionsGenerator.class);
 
     private static String URL;
@@ -54,24 +52,23 @@ public class TransactionsGenerator implements Runnable {
     private final static int SIZE_OF_PACKET = 100;
 
     private final static long TIMEOUT = 10000;
-    private int TEST_DURATION = 120;
-    private boolean TEST_STARTED;
-    private final static int MAX_CREDITCARD_COUNT = 30000000;
+    private final static int MAX_CREDITCARD_COUNT = 100000;
 
-	private AtomicBoolean showStopper = new AtomicBoolean();
     private int COUNT_TRACKER;
     private boolean RANDOM_VALUES;
-     
+    private int count;
+
     private ServerSocketChannel serverChannel;
     private Selector selector;
 
     private TransactionsUtil txnUtil;
+
     private static Random TXNCOUNTER = new Random(1);
- 
+
     public TransactionsGenerator(){
         init();
     }
- 
+
     private void init(){
         loadProperties();
         txnUtil = new TransactionsUtil();
@@ -90,7 +87,7 @@ public class TransactionsGenerator implements Runnable {
             log.severe(e);
         }
     }
- 
+
     private void loadProperties() {
     	String propFileName = "FraudDetection.properties";
 		InputStream stream = getClass().getClassLoader().getResourceAsStream(
@@ -111,16 +108,9 @@ public class TransactionsGenerator implements Runnable {
 			log.severe(e);
 		}
 	}
-    
+
 	private void setProperties(Properties properties) {
-		String temp = properties.getProperty("Duration");
-		if (temp == null) {
-			log.info("Missing Duration. No test duration provided. Default of 2 minutes will be used.");
-			return;
-		}
-		this.TEST_DURATION = Integer.parseInt(temp);
-		
-        temp = properties.getProperty("URL");
+        String temp = properties.getProperty("URL");
         if (temp == null) {
             log.info("Missing URL for TransactionGenerator. Provide URL to listen to incoming connections. Exiting..");
             System.exit(0);
@@ -141,27 +131,13 @@ public class TransactionsGenerator implements Runnable {
         } else {
             RANDOM_VALUES = true;
         }
-	}
 
-	private void startTimer() {
-        if(!TEST_STARTED) {
-            new Timer().schedule(new TimerTask() {
-                public void run() {
-                    showStopper.set(true);
-                }
-            }, TimeUnit.SECONDS.toMillis(TEST_DURATION));
-            TEST_STARTED = true;
-        }
-    }
-	
-	private boolean shouldStop() {
-        return TEST_DURATION != 0 && showStopper.get();
-    }
+	}
 
     public void run() {
         log.info("Initialised. Now ready to accept connections...");
         try{
-            while(!shouldStop()) {
+            while(!Thread.interrupted()) {
                 selector.select(TIMEOUT);
                 Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
                 while (keys.hasNext()){
@@ -179,9 +155,6 @@ public class TransactionsGenerator implements Runnable {
                     }
                 }
             }
-            if(shouldStop()) {
-                log.info("Test Completed. Initiating Shutdown.");
-            }
         } catch (IOException e){
             log.severe(e);
 		} finally{
@@ -190,22 +163,27 @@ public class TransactionsGenerator implements Runnable {
     }
 
 
-    // whenever we enter this method, the buffer must have been filled.  It may be partly written to the channel.
     private void write(SelectionKey key) throws IOException {
         SocketChannel channel = (SocketChannel) key.channel();
         ByteBuffer buffer = (ByteBuffer) key.attachment();
 
-        if (buffer.hasRemaining()) channel.write(buffer);
-
-        while(!buffer.hasRemaining()){
-            buffer.clear();
-            String nextTxn = getNextTransaction();
-            buffer.put(nextTxn.getBytes()); // really should write directly to this buffer while generating txn
-            buffer.flip();
-            channel.write(buffer);
+        try {
+            // it could be partly written to the channel
+            if (buffer.hasRemaining()) {
+                channel.write(buffer);
+            } else {
+                buffer.clear();
+                String nextTxn = getNextTransaction();
+                buffer.put(nextTxn.getBytes()); // really should write directly to this buffer while generating txn
+                buffer.flip();
+                channel.write(buffer);
+            }
+        } catch(IOException x){
+            channel.close();  // this will also unregister it with the selector
+            log.info("channel closed");
         }
     }
-    
+
     private void closeConnection(){
         log.warning("Server shutdown initiated...");
         if (selector != null){
@@ -235,16 +213,13 @@ public class TransactionsGenerator implements Runnable {
         socketChannel.finishConnect();
         log.info("Connection accepted from Fraud Detection Server...");
 
-        // this should be moved off to another thread or this thread will not be able to accept another
-        // connection - but its OK with me right at the moment
-
+        // write the first one - this seems to be necessary though  I don't know why
         buffer.put(getNextTransaction().getBytes());
         buffer.flip();
         write(keyForServerSocket);
 
-        startTimer();
     }
- 
+
     private int getNextCounter() {
         if(COUNT_TRACKER == MAX_CREDITCARD_COUNT) {
             COUNT_TRACKER = 0;
@@ -260,9 +235,14 @@ public class TransactionsGenerator implements Runnable {
     }
 
     private String getNextTransaction() {
+        ++count;
     	int counter = getNextCounter();
-    	//if (COUNT_TRACKER % 1000 == 999) log.info("sending txn number " + (COUNT_TRACKER + 1));
+    	if (count % 10000 == 0) log.info("sending txn number " + count);
 		String creditCardNumber = txnUtil.generateCreditCardNumber(counter);
     	return txnUtil.createAndGetCreditCardTransaction(creditCardNumber, counter);
-    } 
+    }
+
+    public static void main(String []arg) {
+        new Thread(new TransactionsGenerator()).start();
+    }
 }

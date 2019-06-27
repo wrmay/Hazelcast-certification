@@ -120,5 +120,7 @@ I need to make the loading faster for practical reasons.
 
 Leave the transaction source as is. In the original challenge, the problem is not posed as request response.  The challenge appears to be to consume transactions from transaction source, run them through scorer and call "register".  The job is considered done if the scoring has been run and the counter has been incremented.
 
+# Improvements
+- make the task DataSerializable
 
 

@@ -1,11 +1,12 @@
 package com.hazelcast.certification.util;
 
+import com.hazelcast.certification.domain.CreditCardKey;
 import com.hazelcast.certification.domain.Transaction;
 import com.hazelcast.core.MapLoader;
 
 import java.util.*;
 
-public class TransactionMapLoader implements MapLoader<String, LinkedList<Transaction>> {
+public class TransactionMapLoader implements MapLoader<CreditCardKey, LinkedList<Transaction>> {
 
     private static final String PRELOAD_CARD_COUNT_PROPERTY = "preload.cardCount";
     private static final String PRELOAD_TXN_COUNT_PER_CARD = "preload.txnCount";
@@ -37,24 +38,24 @@ public class TransactionMapLoader implements MapLoader<String, LinkedList<Transa
         txnGenerator = new TransactionsUtil();
     }
 
-    public LinkedList<Transaction> load(String s) {
+    public LinkedList<Transaction> load(CreditCardKey key) {
         LinkedList<Transaction> result;
         synchronized (txnGenerator){
-            result = txnGenerator.createAndGetCreditCardTransactions(s, historicalTransactionCount);
+            result = txnGenerator.createAndGetCreditCardTransactions(key.getCardNumber(), historicalTransactionCount);
         }
         return result;
     }
 
-    public Map<String, LinkedList<Transaction>> loadAll(Collection<String> collection) {
-        HashMap<String, LinkedList<Transaction>> result = new HashMap<String, LinkedList<Transaction>>(collection.size());
-        for(String cc: collection) result.put(cc, load(cc));
+    public Map<CreditCardKey, LinkedList<Transaction>> loadAll(Collection<CreditCardKey> collection) {
+        HashMap<CreditCardKey, LinkedList<Transaction>> result = new HashMap<CreditCardKey, LinkedList<Transaction>>(collection.size());
+        for(CreditCardKey cc: collection) result.put(cc, load(cc));
         return result;
     }
 
-    public Iterable<String> loadAllKeys() {
-        ArrayList<String> result = new ArrayList<String>(cardCount);
+    public Iterable<CreditCardKey> loadAllKeys() {
+        ArrayList<CreditCardKey> result = new ArrayList<CreditCardKey>(cardCount);
         synchronized (txnGenerator){
-            for (int i = 0; i < cardCount; ++i) result.add(txnGenerator.generateCreditCardNumber(i));
+            for (int i = 0; i < cardCount; ++i) result.add(new CreditCardKey(txnGenerator.generateCreditCardNumber(i)));
         }
         return result;
     }

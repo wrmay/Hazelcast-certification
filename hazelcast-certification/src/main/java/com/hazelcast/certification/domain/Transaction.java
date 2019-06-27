@@ -5,12 +5,13 @@ import com.hazelcast.nio.ObjectDataOutput;
 import com.hazelcast.nio.serialization.DataSerializable;
 
 import java.io.IOException;
+import java.io.Serializable;
 
 /**
  * Object representation of incoming and historical transaction
  *
  */
-public class Transaction implements DataSerializable {
+public class Transaction implements DataSerializable, Serializable {
 
 	private String creditCardNumber;
 	private long timeStamp;

@@ -21,6 +21,10 @@
         </map-store>
     </map>
 
+    <map name="stats">
+        <in-memory-format>OBJECT</in-memory-format>
+    </map>
+
     <durable-executor-service name="fraud_checker">
         <capacity>100000</capacity>
         <pool-size>4</pool-size>

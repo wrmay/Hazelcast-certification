@@ -26,6 +26,7 @@ public final class RuleEngine {
 		dateTime = new DateTime(currentTxn.getTimeStamp());
 	}
 
+	// should short-circuit the rule execution here
 	public void executeRules() {
 		try {
 			rule01();

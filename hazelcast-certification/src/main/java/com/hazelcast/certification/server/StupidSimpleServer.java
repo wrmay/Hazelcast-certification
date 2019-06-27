@@ -11,6 +11,9 @@ import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 
+/*
+ * This is just used to test the txn generator
+ */
 public class StupidSimpleServer {
     public static void main(String []args){
         Charset ascii  = Charset.forName("ASCII");
@@ -27,6 +30,7 @@ public class StupidSimpleServer {
                 else{
                     System.out.println(">>> " + ascii.decode(ByteBuffer.wrap(buffer, 0, read)));
                 }
+                read = in.read(buffer);
             }
 
         } catch (IOException x){
