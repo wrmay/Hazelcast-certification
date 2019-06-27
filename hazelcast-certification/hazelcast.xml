@@ -15,10 +15,18 @@
     </network>
 
     <map name="transaction_history">
+        <in-memory-format>OBJECT</in-memory-format>
         <map-store enabled="true" initial-mode="EAGER">
             <class-name>com.hazelcast.certification.util.TransactionMapLoader</class-name>
         </map-store>
     </map>
+
+    <durable-executor-service name="fraud_checker">
+        <capacity>100000</capacity>
+        <pool-size>4</pool-size>
+        <durability>1</durability>
+        <!-- may want to configure quorum later -->
+    </durable-executor-service>
 
     <management-center enabled="true">http://localhost:8080/hazelcast-mancenter</management-center>
 </hazelcast>
