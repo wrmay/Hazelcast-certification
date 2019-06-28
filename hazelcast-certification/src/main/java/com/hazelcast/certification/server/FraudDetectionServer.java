@@ -2,7 +2,6 @@ package com.hazelcast.certification.server;
 
 import com.hazelcast.certification.domain.CreditCardKey;
 import com.hazelcast.certification.domain.Transaction;
-import com.hazelcast.certification.process.FraudDetection;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.durableexecutor.DurableExecutorService;
@@ -21,7 +20,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.util.Iterator;
 import java.util.Properties;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -51,14 +49,11 @@ public class FraudDetectionServer {
 	private String URL;
 	private SocketChannel channel;
 
-	private String FRAUD_DETECTION_IMPL_PROVIDER;
-	private final static int DEFAULT_QUEUE_CAPACITY = 10000;
 
 	private ByteBuffer clientBuffer;
 	private final static int BUFFER_SIZE = 100;
 	private static CharsetDecoder decoder = Charset.forName("ASCII").newDecoder();
 
-	private FraudDetection fraudDetectionImpl;
 	private HazelcastInstance hazelcast;
 	private DurableExecutorService executor;
 
@@ -141,7 +136,7 @@ public class FraudDetectionServer {
 	private void close() {
 		try {
 			selector.close();
-			fraudDetectionImpl.shutdown();
+			hazelcast.shutdown();
 		} catch (IOException e) {
 			log.severe(e);
 		}
@@ -165,7 +160,7 @@ public class FraudDetectionServer {
 		executor.submitToKeyOwner(task, new CreditCardKey(t.getCreditCardNumber()));
 	}
 
-	final protected Transaction prepareTransaction(String txnString) throws RuntimeException {
+	private Transaction prepareTransaction(String txnString) throws RuntimeException {
 		Transaction txn = new Transaction();
 		String[] cName = txnString.split(",");
 		txn.setCreditCardNumber(cName[0]);
@@ -202,14 +197,8 @@ public class FraudDetectionServer {
 	}
 
 	private void setProperties(Properties properties) {
-		String temp = properties.getProperty("FraudDetectionImplementation");
-		if (temp == null) {
-			log.severe("Missing FraudDetectionImplementation. No implementation provided for FraudDetection. Exiting...");
-			System.exit(0);
-		}
-		this.FRAUD_DETECTION_IMPL_PROVIDER = temp;
 
-		temp = properties.getProperty("PORT");
+		String temp = properties.getProperty("PORT");
 		if (temp == null) {
 			log.severe("Missing Port. No Port provided for socket communication for incoming transactions. Exiting...");
 			System.exit(0);
@@ -223,13 +212,6 @@ public class FraudDetectionServer {
 		}
 		this.URL = temp;
 
-
-		temp = properties.getProperty("TPSInterval");
-		if (temp == null) {
-			log.warning("No TPS interval configured. Default of 5 seconds will be used");
-			temp = String.valueOf(5);
-		}
-		System.setProperty("TPSInterval", temp);
 	}
 
 

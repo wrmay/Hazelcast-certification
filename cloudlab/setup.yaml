@@ -36,16 +36,11 @@
         args:
           chdir: /home/ec2-user/hazelcast-certification
 
-  - hosts: ManCenter
-    remote_user: ec2-user
-    become: no
-    tasks:
-      - name: download and unpack Hazelcast management center
-        unarchive:
-          src: https://download.hazelcast.com/management-center/hazelcast-management-center-3.12.tar.gz
-          remote_src: yes
-          dest: /home/ec2-user
-
+      - name: download the Prometheus java exporter
+        become: no
+        get_url:
+          url: https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.11.0/jmx_prometheus_javaagent-0.11.0.jar
+          dest: /home/ec2-user/hazelcast-certification/
 
   - hosts: [ TxnGenerator]
     remote_user: ec2-user
@@ -56,11 +51,18 @@
           src: resources/TxnGenerator/
           dest: /home/ec2-user/hazelcast-certification
 
-      - name: download the Prometheus java exporter
-        become: no
-        get_url:
-          url: https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.11.0/jmx_prometheus_javaagent-0.11.0.jar
-          dest: /home/ec2-user/hazelcast-certification/
+      - name: start supervisord (fail if already running)
+        shell: supervisord -c /home/ec2-user/hazelcast-certification/supervisord.conf
+        args:
+          chdir: /home/ec2-user
+        ignore_errors: yes
+
+      # this is done so that, on repeated runs, new config will be picked up
+      - name: stop transaction generator
+        shell: supervisorctl  -c /home/ec2-user/hazelcast-certification/supervisord.conf stop txngenerator
+
+      - name: start transaction generator
+        shell: supervisorctl  -c /home/ec2-user/hazelcast-certification/supervisord.conf start txngenerator
 
   - hosts: ClusterMember
     remote_user: ec2-user
@@ -92,24 +94,20 @@
 
  # This could be improved because right now this block set up mancenter as
  # well. This is due to the fact that they both have a supervisord config and
- # one was overwriting the other.  
+ # one was overwriting the other.
   - hosts: Prometheus
     remote_user: ec2-user
     tasks:
-      - name: install pip
-        become: yes
-        yum:
-          name: python-pip
+      - name: download and unpack Hazelcast management center
+        unarchive:
+          src: https://download.hazelcast.com/management-center/hazelcast-management-center-3.12.tar.gz
+          remote_src: yes
+          dest: /home/ec2-user
 
       # - name: install grafana
       #   become: yes
       #   yum:
       #     name: https://dl.grafana.com/oss/release/grafana-6.2.2-1.x86_64.rpm
-
-      - name: install supervisor python package
-        become: yes
-        pip:
-          name: supervisor
 
       - name: make the hazelcast certification directory
         become: no

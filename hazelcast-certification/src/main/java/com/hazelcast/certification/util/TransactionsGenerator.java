@@ -46,13 +46,12 @@ public class TransactionsGenerator implements Runnable {
 
 	private final static ILogger log = Logger.getLogger(TransactionsGenerator.class);
 
-    private static String URL;
     private static int PORT;
 
     private final static int SIZE_OF_PACKET = 100;
 
     private final static long TIMEOUT = 10000;
-    private final static int MAX_CREDITCARD_COUNT = 100000;
+    private static int CREDIT_CARD_COUNT = 100000;
 
     private int COUNT_TRACKER;
     private boolean RANDOM_VALUES;
@@ -65,7 +64,7 @@ public class TransactionsGenerator implements Runnable {
 
     private static Random TXNCOUNTER = new Random(1);
 
-    public TransactionsGenerator(){
+    private TransactionsGenerator(){
         init();
     }
 
@@ -81,7 +80,7 @@ public class TransactionsGenerator implements Runnable {
             selector = Selector.open();
             serverChannel = ServerSocketChannel.open();
             serverChannel.configureBlocking(false);
-            serverChannel.socket().bind(new InetSocketAddress(URL, PORT));
+            serverChannel.socket().bind(new InetSocketAddress(PORT));
             serverChannel.register(selector, SelectionKey.OP_ACCEPT);
         } catch (IOException e) {
             log.severe(e);
@@ -110,14 +109,7 @@ public class TransactionsGenerator implements Runnable {
 	}
 
 	private void setProperties(Properties properties) {
-        String temp = properties.getProperty("URL");
-        if (temp == null) {
-            log.info("Missing URL for TransactionGenerator. Provide URL to listen to incoming connections. Exiting..");
-            System.exit(0);
-        }
-        URL = temp;
-
-        temp = properties.getProperty("PORT");
+        String temp = properties.getProperty("PORT");
         if (temp == null) {
             log.info("Missing Port for TransactionGenerator. Provide PORT to listen to incoming connections. Exiting..");
             System.exit(0);
@@ -130,6 +122,13 @@ public class TransactionsGenerator implements Runnable {
             RANDOM_VALUES = false;
         } else {
             RANDOM_VALUES = true;
+        }
+
+        temp = properties.getProperty("CreditCardCount");
+        if (temp == null){
+            CREDIT_CARD_COUNT = 100000;
+        } else {
+            CREDIT_CARD_COUNT = Integer.parseInt(temp);
         }
 
 	}
@@ -221,7 +220,7 @@ public class TransactionsGenerator implements Runnable {
     }
 
     private int getNextCounter() {
-        if(COUNT_TRACKER == MAX_CREDITCARD_COUNT) {
+        if(COUNT_TRACKER == CREDIT_CARD_COUNT) {
             COUNT_TRACKER = 0;
             if(RANDOM_VALUES) {
                 TXNCOUNTER = new Random(1);
@@ -229,7 +228,7 @@ public class TransactionsGenerator implements Runnable {
         }
         if(RANDOM_VALUES) {
             ++COUNT_TRACKER;
-            return TXNCOUNTER.nextInt(MAX_CREDITCARD_COUNT);
+            return TXNCOUNTER.nextInt(CREDIT_CARD_COUNT);
         }
         return ++COUNT_TRACKER;
     }
