@@ -25,6 +25,12 @@
         <in-memory-format>OBJECT</in-memory-format>
     </map>
 
+    <queue name="testq">
+        <backup-count>1</backup-count>
+        <async-backup-count>0</async-backup-count>
+        <statistics-enabled>true</statistics-enabled>
+    </queue>
+
     <durable-executor-service name="fraud_checker">
         <capacity>100000</capacity>
         <pool-size>4</pool-size>

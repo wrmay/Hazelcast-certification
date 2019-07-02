@@ -1,7 +1,5 @@
 package com.hazelcast.certification.server;
 
-import com.hazelcast.certification.domain.CreditCardKey;
-import com.hazelcast.certification.domain.Transaction;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.durableexecutor.DurableExecutorService;
@@ -11,16 +9,7 @@ import com.hazelcast.logging.Logger;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.SocketChannel;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
-import java.util.Iterator;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
@@ -44,18 +33,14 @@ import java.util.concurrent.TimeUnit;
 public class FraudDetectionServer {
 
 	private final static ILogger log = Logger.getLogger(FraudDetectionServer.class);
-	private Selector selector;
+
 	private int PORT;
 	private String URL;
-	private SocketChannel channel;
-
-
-	private ByteBuffer clientBuffer;
-	private final static int BUFFER_SIZE = 100;
-	private static CharsetDecoder decoder = Charset.forName("ASCII").newDecoder();
+	private int TXN_SOURCE_THREAD_COUNT = 4;
 
 	private HazelcastInstance hazelcast;
 	private DurableExecutorService executor;
+	private TransactionSource []transactionSources;
 
 	public FraudDetectionServer() {
 		hazelcast = Hazelcast.newHazelcastInstance();
@@ -63,117 +48,16 @@ public class FraudDetectionServer {
 		executor = hazelcast.getDurableExecutorService("fraud_checker");
 
 		loadProperties();
-		clientBuffer = ByteBuffer.allocate(BUFFER_SIZE);
 	}
 
-
-	private void tryChannelSocketConnection()  {
-		boolean connected;
-		while (!Thread.interrupted()) {
-			connected = connect(new InetSocketAddress(URL, PORT));
-			if (connected) {
-				log.info("Connection with Transactions Generator successful...");
-				return;
-			}
-			try {
-				TimeUnit.SECONDS.sleep(3);
-			} catch (InterruptedException e1) {
-				log.severe(e1);
-			}
+	private void startTransactionSources() throws IOException {
+		transactionSources = new TransactionSource[TXN_SOURCE_THREAD_COUNT];
+		for(int i=0;i< TXN_SOURCE_THREAD_COUNT; ++i) {
+			transactionSources[i] = new TransactionSource(URL,PORT,executor);
+			transactionSources[i].start();
 		}
+
 	}
-
-	private boolean connect(InetSocketAddress address) {
-		try {
-			channel = SocketChannel.open();
-			channel.connect(address);
-			channel.write(ByteBuffer.wrap(new byte[]{0})); // this crazy thing fixes a problem with read never returning.
-			channel.configureBlocking(false);
-			return true;
-		} catch (Exception e) {
-			if(channel != null) {
-				try {
-					channel.close();
-				} catch (IOException e1) {
-					log.severe(e1);
-				}
-			}
-			log.warning("Remote node TransactionGenerator not available. Retry in 3 seconds...");
-		}
-		return false;
-	}
-
-	private void run() {
-		try {
-			tryChannelSocketConnection();
-			selector = Selector.open();
-			channel.register(selector, SelectionKey.OP_READ);
-			read();
-			while (!Thread.interrupted()) {
-				selector.select();
-				Iterator<SelectionKey> keys = selector.selectedKeys()
-						.iterator();
-
-				while (keys.hasNext()) {
-					SelectionKey key = keys.next();
-					keys.remove();
-
-					if (!key.isValid())
-						continue;
-
-					if (key.isReadable()) {
-						read();
-					}
-				}
-			}
-		} catch (Exception e) {
-			log.severe(e);
-		} finally {
-			close();
-		}
-	}
-
-	private void close() {
-		try {
-			selector.close();
-			hazelcast.shutdown();
-		} catch (IOException e) {
-			log.severe(e);
-		}
-	}
-
-	private void read() throws IOException {
-		String txnString;
-		channel.read(clientBuffer);
-		if (clientBuffer.position() == clientBuffer.capacity()){
-			clientBuffer.flip();
-			txnString = decoder.decode(clientBuffer).toString();
-			clientBuffer.clear();
-			process(txnString);
-		}
-	}
-
-	// should we farm this out to a thread pool ??
-	private void process(String rawTxnString) {
-		Transaction t = prepareTransaction(rawTxnString.substring(0, rawTxnString.length() - 9));
-		TransactionScoringTask task = new TransactionScoringTask(t);
-		executor.submitToKeyOwner(task, new CreditCardKey(t.getCreditCardNumber()));
-	}
-
-	private Transaction prepareTransaction(String txnString) throws RuntimeException {
-		Transaction txn = new Transaction();
-		String[] cName = txnString.split(",");
-		txn.setCreditCardNumber(cName[0]);
-		txn.setTimeStamp(Long.parseLong(cName[1]));
-		txn.setCountryCode(cName[2]);
-		txn.setResponseCode(cName[3]);
-		txn.setTxnAmt(cName[4]);
-		txn.setMerchantType(cName[6]);
-		txn.setTxnCity(cName[7]);
-		txn.setTxnCode(cName[8]);
-		return txn;
-	}
-
 
 	private void loadProperties() {
 		String propFileName = "FraudDetection.properties";
@@ -212,19 +96,28 @@ public class FraudDetectionServer {
 		}
 		this.URL = temp;
 
+		temp = properties.getProperty("transactionSourceThreadCount");
+		if (temp != null){
+			this.TXN_SOURCE_THREAD_COUNT = Integer.parseInt(temp);
+		}
+
 	}
 
 
 	public static void main(String []args) {
-		FraudDetectionServer server = new FraudDetectionServer();
-		log.info("Waiting 10s for other cluster members to join.");
 		try {
-			Thread.sleep(10000);
-		} catch (InterruptedException x){
-			//
-		}
+			FraudDetectionServer server = new FraudDetectionServer();
+			log.info("Waiting 10s for other cluster members to join.");
+			try {
+				Thread.sleep(10000);
+			} catch (InterruptedException x) {
+				//
+			}
 
-		// start processing transactions.
-		server.run();
+			server.startTransactionSources();
+		} catch(Exception x){
+			log.severe(x);
+			System.exit(1);
+		}
 	}
 }
