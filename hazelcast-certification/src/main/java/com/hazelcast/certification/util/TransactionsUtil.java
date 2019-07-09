@@ -85,26 +85,29 @@ public class TransactionsUtil {
 	}
 
 	// card number : 14-bits, 00000001, 000~30000000, totally 30 Million cards
+//	public String generateCreditCardNumber(int id) {
+//		StringBuilder buffer = new StringBuilder();
+//		buffer.append("000000");
+//		if (id < 10)
+//			buffer.append("0000000" + id);
+//		else if (id > 10 && id < 100)
+//			buffer.append("000000" + id);
+//		else if (id > 100 && id < 1000)
+//			buffer.append("00000" + id);
+//		else if (id > 1000 && id < 10000)
+//			buffer.append("0000" + id);
+//		else if (id > 10000 && id < 100000)
+//			buffer.append("000" + id);
+//		else if (id > 100000 && id < 1000000)
+//			buffer.append("00" + id);
+//		else if (id > 1000000 && id < 10000000)
+//			buffer.append("0" + id);
+//		else
+//			buffer.append(id);
+//		return buffer.toString();
+//	}
 	public String generateCreditCardNumber(int id) {
-		StringBuilder buffer = new StringBuilder();
-		buffer.append("000000");
-		if (id < 10)
-			buffer.append("0000000" + id);
-		else if (id > 10 && id < 100)
-			buffer.append("000000" + id);
-		else if (id > 100 && id < 1000)
-			buffer.append("00000" + id);
-		else if (id > 1000 && id < 10000)
-			buffer.append("0000" + id);
-		else if (id > 10000 && id < 100000)
-			buffer.append("000" + id);
-		else if (id > 100000 && id < 1000000)
-			buffer.append("00" + id);
-		else if (id > 1000000 && id < 10000000)
-			buffer.append("0" + id);
-		else
-			buffer.append(id);
-		return buffer.toString();
+		return String.format("%014d", id);
 	}
 
 	// last 90 days
@@ -116,13 +119,7 @@ public class TransactionsUtil {
 	}
 
 	public String generateTxnCode(int temp) {
-		if (temp < 10)
-			return "0000" + temp;
-		if (temp > 10 && temp < 100)
-			return "000" + temp;
-		if (temp == 100)
-			return "00" + temp;
-		return String.valueOf(temp);
+		return String.format("%05d", temp);
 	}
 
 	// 001-200
@@ -130,7 +127,7 @@ public class TransactionsUtil {
 		int number = countryCodeRandom.nextInt(200);
 		if (number < 10)
 			return "00" + number;
-		if (number > 10 && number < 100)
+		if (number >= 10 && number < 100)
 			return "0" + number;
 		return String.valueOf(number);
 	}
@@ -138,14 +135,14 @@ public class TransactionsUtil {
 	// 95% 00 else random 2-bits
 	public String generateResponseCode(int count) {
 		if (count % 95 == 0)
-			return String.valueOf(responseCodeRandom.nextInt(20));
+			return String.format("%02d",responseCodeRandom.nextInt(20) );
 
 		return "00";
 	}
 
 	// 100-50000 random
-	public String generateTxnAmount() {
-		return String.valueOf(txnAmountRandom.nextInt(50000));
+	public int generateTxnAmount() {
+		return txnAmountRandom.nextInt(50000);
 	}
 
 	// 0001-0500
@@ -153,7 +150,7 @@ public class TransactionsUtil {
 		int merchantType = merchantTypeRandom.nextInt(500);
 		if (merchantType < 10)
 			return "000" + merchantType;
-		if (merchantType > 10 && merchantType < 100)
+		if (merchantType >= 10 && merchantType < 100)
 			return "00" + merchantType;
 		return String.valueOf("0" + merchantType);
 	}
@@ -163,11 +160,11 @@ public class TransactionsUtil {
 		int temp = cityCodeRandom.nextInt(10000);
 		if (temp < 10)
 			return "0000" + temp;
-		if (temp > 10 && temp < 100)
+		if (temp >= 10 && temp < 100)
 			return "000" + temp;
-		if (temp > 100 && temp < 1000)
+		if (temp >= 100 && temp < 1000)
 			return "00" + temp;
-		if (temp > 1000 && temp < 10000)
+		if (temp >= 1000 && temp < 10000)
 			return "0" + temp;
 		return String.valueOf(temp);
 	}

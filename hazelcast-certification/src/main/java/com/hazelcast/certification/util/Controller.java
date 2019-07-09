@@ -56,10 +56,10 @@ public class Controller {
                 System.out.println("transaction processing stopped");
             } else if (command.equals("report") && target.equals("throughput")){
                 reportThroughput(hz);
+            } else {
+                System.out.println("Unrecognized command: " + command);
+                returncode = 1;
             }
-
-            System.out.println("Unrecognized command: " + command);
-            returncode = 1;
         } catch(Exception x){
             returncode = 1;
             x.printStackTrace(System.out);

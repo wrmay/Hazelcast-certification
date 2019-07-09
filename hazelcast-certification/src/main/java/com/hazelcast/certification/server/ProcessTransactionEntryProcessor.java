@@ -50,7 +50,7 @@ public class ProcessTransactionEntryProcessor implements EntryProcessor<CreditCa
         txn.setTimeStamp(Long.parseLong(cName[1]));
         txn.setCountryCode(cName[2]);
         txn.setResponseCode(cName[3]);
-        txn.setTxnAmt(cName[4]);
+        txn.setTxnAmt(Integer.parseInt(cName[4]));
         txn.setMerchantType(cName[6]);
         txn.setTxnCity(cName[7]);
         txn.setTxnCode(cName[8]);

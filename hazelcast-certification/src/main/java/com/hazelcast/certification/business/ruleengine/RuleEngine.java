@@ -90,7 +90,7 @@ public final class RuleEngine {
 
 	private void rule01() {
 		if ("111".equals(currentTxn.getCountryCode())
-				&& Integer.parseInt(currentTxn.getTxnAmt()) > 200000
+				&& currentTxn.getTxnAmt() > 200000
 				&& "0022".equals(currentTxn.getMerchantType()))
 			throw new FraudException(1);
 	}
@@ -103,21 +103,20 @@ public final class RuleEngine {
 
 	private void rule03() {
 		if ("0011".equals(currentTxn.getMerchantType())
-				&& ((Integer.parseInt(currentTxn.getTxnAmt()) > 1000 && "011"
-						.equals(currentTxn.getTxnCurrency())) || (Integer
-						.parseInt(currentTxn.getTxnAmt()) > 1000 && "011"
-						.equals(currentTxn.getTxnCurrency()))))
+				&& ((currentTxn.getTxnAmt() > 1000 && "011"
+						.equals(currentTxn.getTxnCurrency())) || currentTxn.getTxnAmt() > 1000 && "011"
+						.equals(currentTxn.getTxnCurrency())))
 			throw new FraudException(3);
 	}
 
 	private void rule04() {
-		if (Integer.parseInt(currentTxn.getTxnAmt()) > 100000
+		if (currentTxn.getTxnAmt() > 100000
 				&& "1000".equals(currentTxn.getTxnCode()))
 			throw new FraudException(4);
 	}
 
 	private void rule05() {
-		if (Integer.parseInt(currentTxn.getTxnAmt()) > 100000
+		if (currentTxn.getTxnAmt() > 100000
 				&& "00004000222100".equals(currentTxn.getCreditCardNumber()))
 			throw new FraudException(5);
 	}
@@ -138,21 +137,21 @@ public final class RuleEngine {
 
 	private void rule08() {
 		if ("3333".equals(currentTxn.getTxnCode())
-				&& Integer.parseInt(currentTxn.getTxnAmt()) > 10000
+				&& currentTxn.getTxnAmt() > 10000
 				&& "2222".equals(currentTxn.getMerchantType()))
 			throw new FraudException(8);
 	}
 
 	private void rule09() throws ParseException {
 		if (dateTime.getHourOfDay() > 0 && dateTime.getHourOfDay() < 4
-				&& Integer.parseInt(currentTxn.getTxnAmt()) >= 10000)
+				&& currentTxn.getTxnAmt() >= 10000)
 			throw new FraudException(9);
 	}
 
 	private void rule10() throws ParseException {
 		if (dateTime.getHourOfDay() > 0 && dateTime.getHourOfDay() < 4
 				&& "0101".equals(currentTxn.getMerchantType())
-				&& Integer.parseInt(currentTxn.getTxnAmt()) >= 10000)
+				&& currentTxn.getTxnAmt() >= 10000)
 			throw new FraudException(10);
 	}
 
@@ -166,7 +165,7 @@ public final class RuleEngine {
 
 	private void rule12() {
 		if ("00004000222333".equals(currentTxn.getCreditCardNumber())
-				&& Integer.parseInt(currentTxn.getTxnAmt()) > 50000)
+				&& currentTxn.getTxnAmt() > 50000)
 			throw new FraudException(12);
 	}
 
@@ -187,21 +186,21 @@ public final class RuleEngine {
 	private void rule15() throws ParseException {
 		if (dateTime.getHourOfDay() > 0 && dateTime.getHourOfDay() < 4
 				&& "2222".equals(currentTxn.getMerchantType())
-				&& Integer.parseInt(currentTxn.getTxnAmt()) >= 10000)
+				&& currentTxn.getTxnAmt() >= 10000)
 			throw new FraudException(15);
 	}
 
 	private void rule16() throws ParseException {
 		if (dateTime.getHourOfDay() > 0 && dateTime.getHourOfDay() < 4
 				&& "2222".equals(currentTxn.getTxnCode())
-				&& Integer.parseInt(currentTxn.getTxnAmt()) >= 10000)
+				&& currentTxn.getTxnAmt() >= 10000)
 			throw new FraudException(16);
 	}
 
 	private void rule17() throws ParseException {
 		if (dateTime.getMonthOfYear() == 3 && dateTime.getDayOfMonth() == 25
 				&& "2222".equals(currentTxn.getTxnCode())
-				&& Integer.parseInt(currentTxn.getTxnAmt()) >= 10000)
+				&& currentTxn.getTxnAmt() >= 10000)
 			throw new FraudException(17);
 
 	}
@@ -209,21 +208,21 @@ public final class RuleEngine {
 	private void rule18() throws ParseException {
 		if (dateTime.getMonthOfYear() == 3 && dateTime.getDayOfMonth() == 25
 				&& "2222".equals(currentTxn.getMerchantType())
-				&& Integer.parseInt(currentTxn.getTxnAmt()) >= 10000)
+				&& currentTxn.getTxnAmt() >= 10000)
 			throw new FraudException(18);
 
 	}
 
 	private void rule19() throws ParseException {
 		if ("3344".equals(currentTxn.getTxnCode())
-				&& Integer.parseInt(currentTxn.getTxnAmt()) >= 1000000)
+				&& currentTxn.getTxnAmt() >= 1000000)
 			throw new FraudException(19);
 
 	}
 
 	private void rule20() throws ParseException {
 		if ("1001".equals(currentTxn.getTxnCode())
-				&& Integer.parseInt(currentTxn.getTxnAmt()) >= 500000)
+				&& currentTxn.getTxnAmt() >= 500000)
 			throw new FraudException(20);
 
 	}
@@ -235,7 +234,7 @@ public final class RuleEngine {
 		for (Transaction txn : historicalTxns) {
 			DateTime historicalDateTime = new DateTime(txn.getTimeStamp());
 			if (historicalDateTime.isAfter(dateTimeLocal))
-				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
+				n_txn_amt = n_txn_amt + txn.getTxnAmt();
 		}
 		if ("00004000222333".equals(currentTxn.getCreditCardNumber())
 				&& n_txn_amt > 500000)
@@ -252,7 +251,7 @@ public final class RuleEngine {
 		for (Transaction txn : historicalTxns) {
 			DateTime historicalDT = new DateTime(txn.getTimeStamp());
 			if (historicalDT.isAfter(dateTimeLocal))
-				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
+				n_txn_amt = n_txn_amt + txn.getTxnAmt();
 		}
 		if ("3333".equals(currentTxn.getTxnCode()) && n_txn_amt > 1000000
 				&& "2222".equals(currentTxn.getMerchantType()))
@@ -287,7 +286,7 @@ public final class RuleEngine {
 			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal) && "3344".equals(currentTxn.getTxnCode())) {
 				count++;
-				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
+				n_txn_amt = n_txn_amt + txn.getTxnAmt();
 			}
 		}
 		if (count > 10 && n_txn_amt >= 10000000)
@@ -307,12 +306,12 @@ public final class RuleEngine {
 			if (txn_time.isAfter(dateTimeLocal)
 					&& "0011".equals(currentTxn.getMerchantType())
 					&& ("011".equals(currentTxn.getTxnCurrency()))) {
-				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
+				n_txn_amt = n_txn_amt + txn.getTxnAmt();
 			}
 			if (txn_time.isAfter(dateTimeLocal)
 					&& "0011".equals(currentTxn.getMerchantType())
 					&& ("022".equals(currentTxn.getTxnCurrency()))) {
-				n_txn_amt1 = n_txn_amt1 + Integer.parseInt(txn.getTxnAmt());
+				n_txn_amt1 = n_txn_amt1 + txn.getTxnAmt();
 			}
 		}
 		if (n_txn_amt > 10000 || n_txn_amt1 > 20000)
@@ -328,7 +327,7 @@ public final class RuleEngine {
 			dateTimeLocal = dateTimeLocal.minusDays(1);
 			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal)) {
-				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
+				n_txn_amt = n_txn_amt + txn.getTxnAmt();
 			}
 		}
 		if ("00004000222333".equals(currentTxn.getCreditCardNumber())
@@ -346,7 +345,7 @@ public final class RuleEngine {
 			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal) && "3333".equals(txn.getTxnCode())
 					&& "2222".equals(txn.getMerchantType())) {
-				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
+				n_txn_amt = n_txn_amt + txn.getTxnAmt();
 			}
 		}
 		if (n_txn_amt >= 1000000)
@@ -380,7 +379,7 @@ public final class RuleEngine {
 			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal) && "3344".equals(currentTxn.getTxnCode())) {
 				count++;
-				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
+				n_txn_amt = n_txn_amt + txn.getTxnAmt();
 			}
 		}
 		if (count > 10 && n_txn_amt >= 10000000)
@@ -400,12 +399,12 @@ public final class RuleEngine {
 			if (txn_time.isAfter(dateTimeLocal)
 					&& "0011".equals(currentTxn.getMerchantType())
 					&& ("011".equals(currentTxn.getTxnCurrency()))) {
-				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
+				n_txn_amt = n_txn_amt + txn.getTxnAmt();
 			}
 			if (txn_time.isAfter(dateTimeLocal)
 					&& "0011".equals(currentTxn.getMerchantType())
 					&& ("022".equals(currentTxn.getTxnCurrency()))) {
-				n_txn_amt1 = n_txn_amt1 + Integer.parseInt(txn.getTxnAmt());
+				n_txn_amt1 = n_txn_amt1 + txn.getTxnAmt();
 			}
 		}
 		if (n_txn_amt > 10000 || n_txn_amt1 > 20000)
@@ -421,7 +420,7 @@ public final class RuleEngine {
 			dateTimeLocal = dateTimeLocal.minusDays(10);
 			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal)) {
-				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
+				n_txn_amt = n_txn_amt + txn.getTxnAmt();
 			}
 		}
 		if ("00004000222333".equals(currentTxn.getCreditCardNumber())
@@ -439,7 +438,7 @@ public final class RuleEngine {
 			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal) && "3333".equals(txn.getTxnCode())
 					&& "2222".equals(txn.getMerchantType())) {
-				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
+				n_txn_amt = n_txn_amt + txn.getTxnAmt();
 			}
 		}
 		if (n_txn_amt > 500000)
@@ -473,7 +472,7 @@ public final class RuleEngine {
 			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal) && "3344".equals(currentTxn.getTxnCode())) {
 				count++;
-				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
+				n_txn_amt = n_txn_amt + txn.getTxnAmt();
 			}
 		}
 		if (count > 10 && n_txn_amt >= 10000000)
@@ -492,12 +491,12 @@ public final class RuleEngine {
 			if (txn_time.isAfter(dateTimeLocal)
 					&& "0011".equals(currentTxn.getMerchantType())
 					&& ("011".equals(currentTxn.getTxnCurrency()))) {
-				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
+				n_txn_amt = n_txn_amt + txn.getTxnAmt();
 			}
 			if (txn_time.isAfter(dateTimeLocal)
 					&& "0011".equals(currentTxn.getMerchantType())
 					&& ("022".equals(currentTxn.getTxnCurrency()))) {
-				n_txn_amt1 = n_txn_amt1 + Integer.parseInt(txn.getTxnAmt());
+				n_txn_amt1 = n_txn_amt1 + txn.getTxnAmt();
 			}
 		}
 		if (n_txn_amt > 10000 || n_txn_amt1 > 20000)
@@ -515,11 +514,11 @@ public final class RuleEngine {
 			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal)) {
 				count++;
-				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
+				n_txn_amt = n_txn_amt + txn.getTxnAmt();
 			}
 		}
 		if (count > 0) {
-			int txnAmount = Integer.parseInt(currentTxn.getTxnAmt());
+			int txnAmount = currentTxn.getTxnAmt();
 			if (txnAmount > (n_txn_amt / count)
 					|| n_txn_amt > 20000)
 				throw new FraudException(36);
@@ -536,12 +535,12 @@ public final class RuleEngine {
 			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal)) {
 				count++;
-				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
+				n_txn_amt = n_txn_amt + txn.getTxnAmt();
 			}
 		}
 
 		if (count > 0) {
-			if (Integer.parseInt(currentTxn.getTxnAmt()) > (n_txn_amt / count)
+			if (currentTxn.getTxnAmt() > (n_txn_amt / count)
 					|| n_txn_amt > 100000)
 				throw new FraudException(37);
 		}
@@ -558,12 +557,12 @@ public final class RuleEngine {
 			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal)) {
 				count++;
-				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
+				n_txn_amt = n_txn_amt + txn.getTxnAmt();
 			}
 		}
 
 		if (count > 0) {
-			if (Integer.parseInt(currentTxn.getTxnAmt()) > (n_txn_amt / count)
+			if (currentTxn.getTxnAmt() > (n_txn_amt / count)
 					|| n_txn_amt > 200000)
 				throw new FraudException(38);
 		}
@@ -580,12 +579,12 @@ public final class RuleEngine {
 			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal)) {
 				count++;
-				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
+				n_txn_amt = n_txn_amt + txn.getTxnAmt();
 			}
 		}
 
 		if (count > 0) {
-			if (Integer.parseInt(currentTxn.getTxnAmt()) > (n_txn_amt / count)
+			if (currentTxn.getTxnAmt() > (n_txn_amt / count)
 					|| n_txn_amt > 330000)
 				throw new FraudException(39);
 		}
@@ -602,12 +601,12 @@ public final class RuleEngine {
 			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal)) {
 				count++;
-				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
+				n_txn_amt = n_txn_amt + txn.getTxnAmt();
 			}
 		}
 
 		if (count > 0) {
-			if (Integer.parseInt(currentTxn.getTxnAmt()) > (n_txn_amt / count)
+			if (currentTxn.getTxnAmt() > (n_txn_amt / count)
 					|| n_txn_amt > 1110000)
 				throw new FraudException(40);
 		}
@@ -621,9 +620,9 @@ public final class RuleEngine {
 			dateTimeLocal = dateTimeLocal.minusDays(10);
 			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal) && "001".equals(txn.getCountryCode())
-					&& Integer.parseInt(txn.getTxnAmt()) > 10000
+					&& txn.getTxnAmt() > 10000
 					&& "002".equals(currentTxn.getCountryCode())
-					&& Integer.parseInt(currentTxn.getTxnAmt()) > 1000) {
+					&& currentTxn.getTxnAmt() > 1000) {
 				throw new FraudException(41);
 			}
 		}
@@ -639,9 +638,9 @@ public final class RuleEngine {
 			dateTimeLocal = dateTimeLocal.minusDays(10);
 			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal) && (!"001".equals(txn.getCountryCode()))
-					&& Integer.parseInt(txn.getTxnAmt()) > 10000
+					&& txn.getTxnAmt() > 10000
 					&& "002".equals(currentTxn.getCountryCode())
-					&& Integer.parseInt(currentTxn.getTxnAmt()) > 1000) {
+					&& currentTxn.getTxnAmt() > 1000) {
 				throw new FraudException(42);
 			}
 		}
@@ -653,8 +652,8 @@ public final class RuleEngine {
 
 		if(historicalTxns.size() > 1) {
 			DateTime dateTimeLocal = new DateTime(dateTime.toDateTime());
-			if (Integer.parseInt(historicalTxns.get(1).getTxnAmt()) <= 100
-					&& Integer.parseInt(currentTxn.getTxnAmt()) >= 10000) {
+			if (historicalTxns.get(1).getTxnAmt() <= 100
+					&& currentTxn.getTxnAmt() >= 10000) {
 				dateTimeLocal = dateTimeLocal.minusMinutes(10);
 				DateTime txn_time = new DateTime(currentTxn.getTimeStamp());
 				if (txn_time.isAfter(dateTimeLocal)) {
@@ -672,8 +671,7 @@ public final class RuleEngine {
 			dateTimeLocal = dateTimeLocal.minusHours(10);
 			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal)
-					&& (2 > Integer.parseInt(txn.getCountryCode()) && Integer
-							.parseInt(currentTxn.getTxnAmt()) > 10000)) {
+					&& (2 > Integer.parseInt(txn.getCountryCode()) && currentTxn.getTxnAmt() > 10000)) {
 				throw new FraudException(44);
 			}
 		}
@@ -692,7 +690,7 @@ public final class RuleEngine {
 			if (txn_time.isAfter(dateTimeLocal) && "0022".equals(txn.getMerchantType())) {
 				count++;
 			}
-			if (count > 10 && Integer.parseInt(currentTxn.getTxnAmt()) > 1000
+			if (count > 10 && currentTxn.getTxnAmt() > 1000
 					&& "0033".equals(currentTxn.getMerchantType())) {
 				throw new FraudException(45);
 			}
@@ -711,7 +709,7 @@ public final class RuleEngine {
 				count++;
 			}
 			if (count > 50 && Integer.parseInt(txn.getTxnCode()) > 5
-					&& Integer.parseInt(currentTxn.getTxnAmt()) > 20000) {
+					&& currentTxn.getTxnAmt() > 20000) {
 				throw new FraudException(46);
 			}
 		}
@@ -734,7 +732,7 @@ public final class RuleEngine {
 				dateTimeLocal = dateTimeLocal.plusHours(1);
 				DateTime dateTimeLocal2 = new DateTime(dateTimeLocal.toDateTime());
 				if (txn_time.isAfter(dateTimeLocal2)) {
-					n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
+					n_txn_amt = n_txn_amt + txn.getTxnAmt();
 				}
 			}
 		}
@@ -761,7 +759,7 @@ public final class RuleEngine {
 			}
 		}
 		if (count > 10 && "0033".equals(currentTxn.getMerchantType())
-				&& Integer.parseInt(currentTxn.getTxnAmt()) > 1000) {
+				&& currentTxn.getTxnAmt() > 1000) {
 			throw new FraudException(48);
 		}
 		historicalTxns.add(currentTxn);
@@ -778,11 +776,11 @@ public final class RuleEngine {
 			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal) && "0022".equals(txn.getMerchantType())
 					&& "0001".equals(txn.getTxnCode())) {
-				n_txn_amt = n_txn_amt + Integer.parseInt(txn.getTxnAmt());
+				n_txn_amt = n_txn_amt + txn.getTxnAmt();
 			}
 		}
 		if (n_txn_amt > 10000 && "0033".equals(currentTxn.getMerchantType())
-				&& Integer.parseInt(currentTxn.getTxnAmt()) > 10000) {
+				&& currentTxn.getTxnAmt() > 10000) {
 			throw new FraudException(49);
 		}
 

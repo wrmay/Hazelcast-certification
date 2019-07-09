@@ -13,25 +13,21 @@ import java.io.Serializable;
  */
 public class Transaction implements DataSerializable, Serializable {
 
-	private String creditCardNumber;
 	private long timeStamp;
-	private String countryCode;
-	private String responseCode;
-	private String txnAmount;
-	private String txnCurrency;
-	private String txnCode = "";
-	private String merchantType;
-	private String txnCity;
+	private int txnAmount;
+	private byte []stringFields;
 	private FraudCheck fraudCheck;
 
-	public Transaction() {}
+	public Transaction() {
+		stringFields = new byte[36];
+	}
 
 	public String getCreditCardNumber() {
-		return creditCardNumber;
+		return new String(stringFields, 0, 14);
 	}
 
 	public void setCreditCardNumber(String credit_card_number) {
-		this.creditCardNumber = credit_card_number;
+		System.arraycopy(credit_card_number.getBytes(), 0, stringFields, 0, 14);
 	}
 
 	public long getTimeStamp() {
@@ -43,59 +39,59 @@ public class Transaction implements DataSerializable, Serializable {
 	}
 
 	public String getCountryCode() {
-		return countryCode;
-	}
+		return new String(stringFields, 14, 3);
+	};
 
 	public void setCountryCode(String country_code) {
-		this.countryCode = country_code;
+		System.arraycopy(country_code.getBytes(), 0, stringFields, 14, 3);
 	}
 
 	public String getResponseCode() {
-		return responseCode;
+		return new String(stringFields, 17, 2);
 	}
 
 	public void setResponseCode(String response_code) {
-		this.responseCode = response_code;
+		System.arraycopy(response_code.getBytes(), 0, stringFields, 17, 2);
 	}
 
-	public String getTxnAmt() {
+	public int getTxnAmt() {
 		return txnAmount;
 	}
 
-	public void setTxnAmt(String txnAmount) {
+	public void setTxnAmt(int txnAmount) {
 		this.txnAmount = txnAmount;
 	}
 
 	public String getTxnCurrency() {
-		return txnCurrency;
+		return new String(stringFields, 33, 3);
 	}
 
 	public void setTxnCurrency(String txn_currency) {
-		this.txnCurrency = txn_currency;
+		System.arraycopy(txn_currency.getBytes(), 0, stringFields, 33, 3);
 	}
 
 	public String getTxnCode() {
-		return txnCode;
+		return new String(stringFields, 28, 5);
 	}
 
 	public void setTxnCode(String txn_code) {
-		this.txnCode = txn_code;
+		System.arraycopy(txn_code.getBytes(),0,stringFields,28,5);
 	}
 
 	public String getMerchantType() {
-		return merchantType;
+		return new String(stringFields, 19,4);
 	}
 
 	public void setMerchantType(String merchant_type) {
-		this.merchantType = merchant_type;
+		System.arraycopy(merchant_type.getBytes(), 0, stringFields, 19, 4);
 	}
 
 	public String getTxnCity() {
-		return txnCity;
+		return new String(stringFields, 23, 5);
 	}
 
 	public void setTxnCity(String txn_city) {
-		this.txnCity = txn_city;
+		System.arraycopy(txn_city.getBytes(), 0, stringFields, 23, 5);
 	}
 
 	public FraudCheck getFraudCheck() {
@@ -106,52 +102,40 @@ public class Transaction implements DataSerializable, Serializable {
 		this.fraudCheck = fraudCheck;
 	}
 
-	public String toString() {
-		StringBuffer sb = new StringBuffer();
-		sb.append(creditCardNumber);
-		sb.append(",");
-		sb.append(timeStamp);
-		sb.append(",");
-		sb.append(countryCode);
-		sb.append(",");
-		sb.append(responseCode);
-		sb.append(",");
-		sb.append(txnAmount);
-		sb.append(",");
-		sb.append(countryCode);
-		sb.append(",");
-		sb.append(merchantType);
-		sb.append(",");
-		sb.append(txnCity);
-		sb.append(",");
-		sb.append(txnCode);
-		
-		return sb.toString();
-	}
+//	public String toString() {
+//		StringBuffer sb = new StringBuffer();
+//		sb.append(creditCardNumber);
+//		sb.append(",");
+//		sb.append(timeStamp);
+//		sb.append(",");
+//		sb.append(countryCode);
+//		sb.append(",");
+//		sb.append(responseCode);
+//		sb.append(",");
+//		sb.append(txnAmount);
+//		sb.append(",");
+//		sb.append(countryCode);
+//		sb.append(",");
+//		sb.append(merchantType);
+//		sb.append(",");
+//		sb.append(txnCity);
+//		sb.append(",");
+//		sb.append(txnCode);
+//
+//		return sb.toString();
+//	}
 
 	public void writeData(ObjectDataOutput objectDataOutput) throws IOException {
-		objectDataOutput.writeUTF(creditCardNumber);
 		objectDataOutput.writeLong(timeStamp);
-		objectDataOutput.writeUTF(countryCode);
-		objectDataOutput.writeUTF(responseCode);
-		objectDataOutput.writeUTF(txnAmount);
-		objectDataOutput.writeUTF(txnCurrency);
-		objectDataOutput.writeUTF(txnCode);
-		objectDataOutput.writeUTF(merchantType);
-		objectDataOutput.writeUTF(txnCity);
+		objectDataOutput.writeInt(txnAmount);
 		objectDataOutput.writeObject(fraudCheck);
+		objectDataOutput.writeByteArray(stringFields);
 	}
 
 	public void readData(ObjectDataInput objectDataInput) throws IOException {
-		creditCardNumber = objectDataInput.readUTF();
 		timeStamp = objectDataInput.readLong();
-		countryCode = objectDataInput.readUTF();
-		responseCode = objectDataInput.readUTF();
-		txnAmount = objectDataInput.readUTF();
-		txnCurrency = objectDataInput.readUTF();
-		txnCode = objectDataInput.readUTF();
-		merchantType = objectDataInput.readUTF();
-		txnCity = objectDataInput.readUTF();
+		txnAmount = objectDataInput.readInt();
 		fraudCheck = objectDataInput.readObject();
+		stringFields = objectDataInput.readByteArray();
 	}
 }

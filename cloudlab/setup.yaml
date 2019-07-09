@@ -173,7 +173,8 @@
           chdir: ../hazelcast-certification
 
   - hosts: ManCenter
+    remote_user: ec2-user
     tasks:
       - name: print the management center URL
         debug:
-          msg: http://{{ dns_name }}:8080/hazelcast-mancenter 
+          msg: http://{{ dns_name }}:8080/hazelcast-mancenter
