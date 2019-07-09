@@ -18,9 +18,10 @@ public class CreditCardKey implements PartitionAware<String> , DataSerializable 
     }
 
     public String getPartitionKey() {
-        return ccNumber.substring(ccNumber.length() - 3);
+        return getPartition(ccNumber);
     }
 
+    public static String getPartition(String ccNumber) { return ccNumber.substring(ccNumber.length() - 2);}
 
     public void writeData(ObjectDataOutput objectDataOutput) throws IOException {
         objectDataOutput.writeUTF(ccNumber);

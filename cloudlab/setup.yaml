@@ -7,6 +7,14 @@
         args:
           chdir: ../hazelcast-certification
 
+      - name: render hazelcast-client.xml
+        template:
+          src: local-hazelcast-client.xml.j2
+          dest: "{{ envname }}/hazelcast-client.xml"
+          lstrip_blocks: yes
+          trim_blocks: yes
+
+
   - hosts: all
     remote_user: ec2-user
     tasks:
@@ -155,3 +163,17 @@
 
       - name: start mancenter
         shell: supervisorctl start mancenter
+
+  - hosts: 127.0.0.1
+    connection: local
+    tasks:
+      - name: package the maven project
+        shell: mvn package
+        args:
+          chdir: ../hazelcast-certification
+
+  - hosts: ManCenter
+    tasks:
+      - name: print the management center URL
+        debug:
+          msg: http://{{ dns_name }}:8080/hazelcast-mancenter 

@@ -15,6 +15,7 @@ public final class RuleEngine {
 	private Transaction currentTxn;
 	private List<Transaction> historicalTxns;
 	private boolean detectionResult;
+	private int failedTest;
 	private DateTime dateTime;
 
 	public RuleEngine(Transaction currentTxn, List<Transaction> historicalTxns) {
@@ -78,6 +79,10 @@ public final class RuleEngine {
 			rule47();
 			rule48();
 			rule49();
+		} catch (FraudException e) {
+			this.detectionResult = true;
+			this.failedTest = e.getFailedTest();
+			//log.warning("FRAUD: " + e.getFailedTest());
 		} catch (ParseException e) {
 			log.severe(e);
 		}
@@ -87,13 +92,13 @@ public final class RuleEngine {
 		if ("111".equals(currentTxn.getCountryCode())
 				&& Integer.parseInt(currentTxn.getTxnAmt()) > 200000
 				&& "0022".equals(currentTxn.getMerchantType()))
-			detectionResult = true;
+			throw new FraudException(1);
 	}
 
 	private void rule02() {
 		if ("121".equals(currentTxn.getCountryCode())
 				&& (!"00".equals(currentTxn.getResponseCode())))
-			detectionResult = true;
+			throw new FraudException(2);
 	}
 
 	private void rule03() {
@@ -102,53 +107,53 @@ public final class RuleEngine {
 						.equals(currentTxn.getTxnCurrency())) || (Integer
 						.parseInt(currentTxn.getTxnAmt()) > 1000 && "011"
 						.equals(currentTxn.getTxnCurrency()))))
-			detectionResult = true;
+			throw new FraudException(3);
 	}
 
 	private void rule04() {
 		if (Integer.parseInt(currentTxn.getTxnAmt()) > 100000
 				&& "1000".equals(currentTxn.getTxnCode()))
-			detectionResult = true;
+			throw new FraudException(4);
 	}
 
 	private void rule05() {
 		if (Integer.parseInt(currentTxn.getTxnAmt()) > 100000
 				&& "00004000222100".equals(currentTxn.getCreditCardNumber()))
-			detectionResult = true;
+			throw new FraudException(5);
 	}
 
 	private void rule06() {
 		if (("000112340000444422".equals(currentTxn.getCreditCardNumber()) || "000112340000444422"
 				.equals(currentTxn.getCreditCardNumber()))
 				&& "2000".equals(currentTxn.getMerchantType()))
-			detectionResult = true;
+			throw new FraudException(6);
 	}
 
 	private void rule07() {
 		if (("0001".equals(currentTxn.getMerchantType()) || "2222"
 				.equals(currentTxn.getMerchantType()))
 				&& "221".equals(currentTxn.getCountryCode()))
-			detectionResult = true;
+			throw new FraudException(7);
 	}
 
 	private void rule08() {
 		if ("3333".equals(currentTxn.getTxnCode())
 				&& Integer.parseInt(currentTxn.getTxnAmt()) > 10000
 				&& "2222".equals(currentTxn.getMerchantType()))
-			detectionResult = true;
+			throw new FraudException(8);
 	}
 
 	private void rule09() throws ParseException {
 		if (dateTime.getHourOfDay() > 0 && dateTime.getHourOfDay() < 4
 				&& Integer.parseInt(currentTxn.getTxnAmt()) >= 10000)
-			detectionResult = true;
+			throw new FraudException(9);
 	}
 
 	private void rule10() throws ParseException {
 		if (dateTime.getHourOfDay() > 0 && dateTime.getHourOfDay() < 4
 				&& "0101".equals(currentTxn.getMerchantType())
 				&& Integer.parseInt(currentTxn.getTxnAmt()) >= 10000)
-			detectionResult = true;
+			throw new FraudException(10);
 	}
 
 	private void rule11() {
@@ -156,48 +161,48 @@ public final class RuleEngine {
 				.equals(currentTxn.getCountryCode()))
 				&& ("0001".equals(currentTxn.getMerchantType()) || "2222"
 						.equals(currentTxn.getMerchantType())))
-			detectionResult = true;
+			throw new FraudException(11);
 	}
 
 	private void rule12() {
 		if ("00004000222333".equals(currentTxn.getCreditCardNumber())
 				&& Integer.parseInt(currentTxn.getTxnAmt()) > 50000)
-			detectionResult = true;
+			throw new FraudException(12);
 	}
 
 	private void rule13() {
 		if (("000112340000444444".equals(currentTxn.getCreditCardNumber()) || "003300030044442211"
 				.equals(currentTxn.getCountryCode()))
 				&& "2200".equals(currentTxn.getMerchantType()))
-			detectionResult = true;
+			throw new FraudException(13);
 	}
 
 	private void rule14() {
 		if (("000112340000444444".equals(currentTxn.getCreditCardNumber()) || "003300030044442211"
 				.equals(currentTxn.getCountryCode()))
 				&& !"2222".equals(currentTxn.getTxnCode()))
-			detectionResult = true;
+			throw new FraudException(14);
 	}
 
 	private void rule15() throws ParseException {
 		if (dateTime.getHourOfDay() > 0 && dateTime.getHourOfDay() < 4
 				&& "2222".equals(currentTxn.getMerchantType())
 				&& Integer.parseInt(currentTxn.getTxnAmt()) >= 10000)
-			detectionResult = true;
+			throw new FraudException(15);
 	}
 
 	private void rule16() throws ParseException {
 		if (dateTime.getHourOfDay() > 0 && dateTime.getHourOfDay() < 4
 				&& "2222".equals(currentTxn.getTxnCode())
 				&& Integer.parseInt(currentTxn.getTxnAmt()) >= 10000)
-			detectionResult = true;
+			throw new FraudException(16);
 	}
 
 	private void rule17() throws ParseException {
 		if (dateTime.getMonthOfYear() == 3 && dateTime.getDayOfMonth() == 25
 				&& "2222".equals(currentTxn.getTxnCode())
 				&& Integer.parseInt(currentTxn.getTxnAmt()) >= 10000)
-			detectionResult = true;
+			throw new FraudException(17);
 
 	}
 
@@ -205,21 +210,21 @@ public final class RuleEngine {
 		if (dateTime.getMonthOfYear() == 3 && dateTime.getDayOfMonth() == 25
 				&& "2222".equals(currentTxn.getMerchantType())
 				&& Integer.parseInt(currentTxn.getTxnAmt()) >= 10000)
-			detectionResult = true;
+			throw new FraudException(18);
 
 	}
 
 	private void rule19() throws ParseException {
 		if ("3344".equals(currentTxn.getTxnCode())
 				&& Integer.parseInt(currentTxn.getTxnAmt()) >= 1000000)
-			detectionResult = true;
+			throw new FraudException(19);
 
 	}
 
 	private void rule20() throws ParseException {
 		if ("1001".equals(currentTxn.getTxnCode())
 				&& Integer.parseInt(currentTxn.getTxnAmt()) >= 500000)
-			detectionResult = true;
+			throw new FraudException(20);
 
 	}
 
@@ -234,7 +239,7 @@ public final class RuleEngine {
 		}
 		if ("00004000222333".equals(currentTxn.getCreditCardNumber())
 				&& n_txn_amt > 500000)
-			detectionResult = true;
+			throw new FraudException(21);
 
 	}
 
@@ -251,7 +256,7 @@ public final class RuleEngine {
 		}
 		if ("3333".equals(currentTxn.getTxnCode()) && n_txn_amt > 1000000
 				&& "2222".equals(currentTxn.getMerchantType()))
-			detectionResult = true;
+			throw new FraudException(22);
 
 	}
 
@@ -267,7 +272,7 @@ public final class RuleEngine {
 				count++;
 		}
 		if (count > 100)
-			detectionResult = true;
+			throw new FraudException(23);
 
 	}
 
@@ -286,7 +291,7 @@ public final class RuleEngine {
 			}
 		}
 		if (count > 10 && n_txn_amt >= 10000000)
-			detectionResult = true;
+			throw new FraudException(24);
 
 	}
 
@@ -311,7 +316,7 @@ public final class RuleEngine {
 			}
 		}
 		if (n_txn_amt > 10000 || n_txn_amt1 > 20000)
-			detectionResult = true;
+			throw new FraudException(25);
 
 	}
 
@@ -328,7 +333,7 @@ public final class RuleEngine {
 		}
 		if ("00004000222333".equals(currentTxn.getCreditCardNumber())
 				&& n_txn_amt >= 500000)
-			detectionResult = true;
+			throw new FraudException(26);
 
 	}
 
@@ -345,7 +350,7 @@ public final class RuleEngine {
 			}
 		}
 		if (n_txn_amt >= 1000000)
-			detectionResult = true;
+			throw new FraudException(27);
 
 	}
 
@@ -361,7 +366,7 @@ public final class RuleEngine {
 			}
 		}
 		if (count >= 300)
-			detectionResult = true;
+			throw new FraudException(28);
 
 	}
 
@@ -379,7 +384,7 @@ public final class RuleEngine {
 			}
 		}
 		if (count > 10 && n_txn_amt >= 10000000)
-			detectionResult = true;
+			throw new FraudException(29);
 
 	}
 
@@ -404,7 +409,7 @@ public final class RuleEngine {
 			}
 		}
 		if (n_txn_amt > 10000 || n_txn_amt1 > 20000)
-			detectionResult = true;
+			throw new FraudException(30);
 
 	}
 
@@ -421,7 +426,7 @@ public final class RuleEngine {
 		}
 		if ("00004000222333".equals(currentTxn.getCreditCardNumber())
 				&& n_txn_amt > 500000)
-			detectionResult = true;
+			throw new FraudException(31);
 
 	}
 
@@ -438,7 +443,7 @@ public final class RuleEngine {
 			}
 		}
 		if (n_txn_amt > 500000)
-			detectionResult = true;
+			throw new FraudException(32);
 
 	}
 
@@ -454,7 +459,7 @@ public final class RuleEngine {
 			}
 		}
 		if (count >= 400)
-			detectionResult = true;
+			throw new FraudException(33);
 
 	}
 
@@ -472,7 +477,7 @@ public final class RuleEngine {
 			}
 		}
 		if (count > 10 && n_txn_amt >= 10000000)
-			detectionResult = true;
+			throw new FraudException(34);
 
 	}
 
@@ -496,7 +501,7 @@ public final class RuleEngine {
 			}
 		}
 		if (n_txn_amt > 10000 || n_txn_amt1 > 20000)
-			detectionResult = true;
+			throw new FraudException(35);
 
 	}
 
@@ -504,9 +509,9 @@ public final class RuleEngine {
 			throws ParseException {
 		int count = 0;
 		int n_txn_amt = 0;
-		DateTime dateTimeLocal = new DateTime(dateTime.toDateTime());
+		DateTime dateTimeLocal = new DateTime(dateTime.toDateTime()).minusDays(60);
 		for (Transaction txn : historicalTxns) {
-			dateTimeLocal = dateTimeLocal.minusDays(60);
+			//dateTimeLocal = dateTimeLocal.minusDays(60);
 			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal)) {
 				count++;
@@ -514,9 +519,10 @@ public final class RuleEngine {
 			}
 		}
 		if (count > 0) {
-			if (Integer.parseInt(currentTxn.getTxnAmt()) > (n_txn_amt / count)
+			int txnAmount = Integer.parseInt(currentTxn.getTxnAmt());
+			if (txnAmount > (n_txn_amt / count)
 					|| n_txn_amt > 20000)
-				detectionResult = true;
+				throw new FraudException(36);
 		}
 
 	}
@@ -525,9 +531,8 @@ public final class RuleEngine {
 			throws ParseException {
 		int count = 0;
 		int n_txn_amt = 0;
-		DateTime dateTimeLocal = new DateTime(dateTime.toDateTime());
+		DateTime dateTimeLocal = new DateTime(dateTime.toDateTime()).minusDays(70);
 		for (Transaction txn : historicalTxns) {
-			dateTimeLocal = dateTimeLocal.minusDays(70);
 			DateTime txn_time = new DateTime(txn.getTimeStamp());
 			if (txn_time.isAfter(dateTimeLocal)) {
 				count++;
@@ -538,7 +543,7 @@ public final class RuleEngine {
 		if (count > 0) {
 			if (Integer.parseInt(currentTxn.getTxnAmt()) > (n_txn_amt / count)
 					|| n_txn_amt > 100000)
-				detectionResult = true;
+				throw new FraudException(37);
 		}
 
 	}
@@ -560,7 +565,7 @@ public final class RuleEngine {
 		if (count > 0) {
 			if (Integer.parseInt(currentTxn.getTxnAmt()) > (n_txn_amt / count)
 					|| n_txn_amt > 200000)
-				detectionResult = true;
+				throw new FraudException(38);
 		}
 
 	}
@@ -582,7 +587,7 @@ public final class RuleEngine {
 		if (count > 0) {
 			if (Integer.parseInt(currentTxn.getTxnAmt()) > (n_txn_amt / count)
 					|| n_txn_amt > 330000)
-				detectionResult = true;
+				throw new FraudException(39);
 		}
 
 	}
@@ -604,7 +609,7 @@ public final class RuleEngine {
 		if (count > 0) {
 			if (Integer.parseInt(currentTxn.getTxnAmt()) > (n_txn_amt / count)
 					|| n_txn_amt > 1110000)
-				detectionResult = true;
+				throw new FraudException(40);
 		}
 
 	}
@@ -619,7 +624,7 @@ public final class RuleEngine {
 					&& Integer.parseInt(txn.getTxnAmt()) > 10000
 					&& "002".equals(currentTxn.getCountryCode())
 					&& Integer.parseInt(currentTxn.getTxnAmt()) > 1000) {
-				detectionResult = true;
+				throw new FraudException(41);
 			}
 		}
 
@@ -637,7 +642,7 @@ public final class RuleEngine {
 					&& Integer.parseInt(txn.getTxnAmt()) > 10000
 					&& "002".equals(currentTxn.getCountryCode())
 					&& Integer.parseInt(currentTxn.getTxnAmt()) > 1000) {
-				detectionResult = true;
+				throw new FraudException(42);
 			}
 		}
 		historicalTxns.add(currentTxn);
@@ -653,7 +658,7 @@ public final class RuleEngine {
 				dateTimeLocal = dateTimeLocal.minusMinutes(10);
 				DateTime txn_time = new DateTime(currentTxn.getTimeStamp());
 				if (txn_time.isAfter(dateTimeLocal)) {
-					detectionResult = true;
+					throw new FraudException(43);
 				}
 			}
 		}
@@ -669,7 +674,7 @@ public final class RuleEngine {
 			if (txn_time.isAfter(dateTimeLocal)
 					&& (2 > Integer.parseInt(txn.getCountryCode()) && Integer
 							.parseInt(currentTxn.getTxnAmt()) > 10000)) {
-				detectionResult = true;
+				throw new FraudException(44);
 			}
 		}
 
@@ -689,7 +694,7 @@ public final class RuleEngine {
 			}
 			if (count > 10 && Integer.parseInt(currentTxn.getTxnAmt()) > 1000
 					&& "0033".equals(currentTxn.getMerchantType())) {
-				detectionResult = true;
+				throw new FraudException(45);
 			}
 		}
 		historicalTxns.add(currentTxn);
@@ -707,7 +712,7 @@ public final class RuleEngine {
 			}
 			if (count > 50 && Integer.parseInt(txn.getTxnCode()) > 5
 					&& Integer.parseInt(currentTxn.getTxnAmt()) > 20000) {
-				detectionResult = true;
+				throw new FraudException(46);
 			}
 		}
 		historicalTxns.add(currentTxn);
@@ -734,7 +739,7 @@ public final class RuleEngine {
 			}
 		}
 		if (n_txn_amt > 10000 && "122".equals(currentTxn.getCountryCode())) {
-			detectionResult = true;
+			throw new FraudException(47);
 		}
 		historicalTxns.add(currentTxn);
 	}
@@ -757,7 +762,7 @@ public final class RuleEngine {
 		}
 		if (count > 10 && "0033".equals(currentTxn.getMerchantType())
 				&& Integer.parseInt(currentTxn.getTxnAmt()) > 1000) {
-			detectionResult = true;
+			throw new FraudException(48);
 		}
 		historicalTxns.add(currentTxn);
 	}
@@ -778,7 +783,7 @@ public final class RuleEngine {
 		}
 		if (n_txn_amt > 10000 && "0033".equals(currentTxn.getMerchantType())
 				&& Integer.parseInt(currentTxn.getTxnAmt()) > 10000) {
-			detectionResult = true;
+			throw new FraudException(49);
 		}
 
 		historicalTxns.add(currentTxn);
@@ -786,5 +791,15 @@ public final class RuleEngine {
 
 	public boolean isFraudTxn() {
 		return detectionResult;
+	}
+	public int getFailedTest() { return isFraudTxn() ? this.failedTest : 0;}
+
+	public static class FraudException extends RuntimeException{
+		private int test;
+		public FraudException(int t){
+			this.test = t;
+		}
+
+		public int getFailedTest() { return test;}
 	}
 }

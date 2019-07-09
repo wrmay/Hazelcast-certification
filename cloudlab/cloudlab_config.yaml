@@ -7,7 +7,7 @@
         - TxnGenerator
 
     - instance_type: m5.2xlarge
-      private_ip_addresses: [102,103]
+      private_ip_addresses: [102,103,104,105,106]
       roles:
         - ClusterMember
 

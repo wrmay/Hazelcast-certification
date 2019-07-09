@@ -22,6 +22,7 @@ public class Transaction implements DataSerializable, Serializable {
 	private String txnCode = "";
 	private String merchantType;
 	private String txnCity;
+	private FraudCheck fraudCheck;
 
 	public Transaction() {}
 
@@ -97,6 +98,14 @@ public class Transaction implements DataSerializable, Serializable {
 		this.txnCity = txn_city;
 	}
 
+	public FraudCheck getFraudCheck() {
+		return fraudCheck;
+	}
+
+	public void setFraudCheck(FraudCheck fraudCheck) {
+		this.fraudCheck = fraudCheck;
+	}
+
 	public String toString() {
 		StringBuffer sb = new StringBuffer();
 		sb.append(creditCardNumber);
@@ -130,6 +139,7 @@ public class Transaction implements DataSerializable, Serializable {
 		objectDataOutput.writeUTF(txnCode);
 		objectDataOutput.writeUTF(merchantType);
 		objectDataOutput.writeUTF(txnCity);
+		objectDataOutput.writeObject(fraudCheck);
 	}
 
 	public void readData(ObjectDataInput objectDataInput) throws IOException {
@@ -142,5 +152,6 @@ public class Transaction implements DataSerializable, Serializable {
 		txnCode = objectDataInput.readUTF();
 		merchantType = objectDataInput.readUTF();
 		txnCity = objectDataInput.readUTF();
+		fraudCheck = objectDataInput.readObject();
 	}
 }

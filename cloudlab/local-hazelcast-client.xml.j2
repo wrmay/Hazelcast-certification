@@ -6,6 +6,7 @@
 
 
   <network>
+    <smart-routing>false</smart-routing>
     <cluster-members>
 {% for host in groups['ClusterMember']%}
       <address>{{ hostvars[host].dns_name }}:5701</address>

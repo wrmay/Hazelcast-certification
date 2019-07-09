@@ -14,29 +14,28 @@
         </join>
     </network>
 
+
     <map name="transaction_history">
         <in-memory-format>OBJECT</in-memory-format>
         <map-store enabled="true" initial-mode="EAGER">
             <class-name>com.hazelcast.certification.util.TransactionMapLoader</class-name>
+            <properties>
+                <property name="preload.cardCount">100000</property>
+                <property name="preload.txnCount">40</property>
+            </properties>
         </map-store>
     </map>
 
-    <map name="stats">
-        <in-memory-format>OBJECT</in-memory-format>
+    <!-- this is just here for documentation purposes -->
+    <map name="controller">
     </map>
 
-    <queue name="testq">
-        <backup-count>1</backup-count>
-        <async-backup-count>0</async-backup-count>
-        <statistics-enabled>true</statistics-enabled>
-    </queue>
-
-    <durable-executor-service name="fraud_checker">
-        <capacity>100000</capacity>
-        <pool-size>4</pool-size>
-        <durability>1</durability>
-        <!-- may want to configure quorum later -->
-    </durable-executor-service>
+    <properties>
+        <property name="transaction.server.host">localhost</property>
+        <property name="transaction.server.port">8511</property>
+        <property name="transaction.reader.threads">1</property>
+    </properties>
 
     <management-center enabled="true">http://localhost:8080/hazelcast-mancenter</management-center>
+
 </hazelcast>
