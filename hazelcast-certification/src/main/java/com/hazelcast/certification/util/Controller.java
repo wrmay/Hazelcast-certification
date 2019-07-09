@@ -1,5 +1,8 @@
 package com.hazelcast.certification.util;
 
+import com.hazelcast.certification.domain.CreditCardKey;
+import com.hazelcast.certification.domain.Stats;
+import com.hazelcast.certification.domain.Transaction;
 import com.hazelcast.certification.server.FraudDetectionServer;
 import com.hazelcast.certification.server.LoadTransactionHistoryTask;
 import com.hazelcast.certification.server.TransactionSource;
@@ -8,6 +11,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IExecutorService;
 import com.hazelcast.core.IMap;
 
+import java.util.LinkedList;
 import java.util.concurrent.ExecutorService;
 
 public class Controller {
@@ -42,14 +46,16 @@ public class Controller {
                 IExecutorService executor = hz.getExecutorService("default");
                 executor.submit(new LoadTransactionHistoryTask());
                 System.out.println("load started");
-            } else if (command.equals("start") ) {
+            } else if (command.equals("start") && target.equals("processing")) {
                 IMap<String, Boolean> controller = hz.getMap("controller");
                 controller.set(TransactionSource.TRANSACTION_SOURCE_ON_PARAMETER, Boolean.TRUE);
                 System.out.println("transaction processing started");
-            } else if (command.equals("stop")) {
+            } else if (command.equals("stop") && target.equals("processing")) {
                 IMap<String, Boolean> controller = hz.getMap("controller");
                 controller.set(TransactionSource.TRANSACTION_SOURCE_ON_PARAMETER, Boolean.FALSE);
                 System.out.println("transaction processing stopped");
+            } else if (command.equals("report") && target.equals("throughput")){
+                reportThroughput(hz);
             }
 
             System.out.println("Unrecognized command: " + command);
@@ -63,6 +69,15 @@ public class Controller {
         }
 
         System.exit(returncode);
+    }
+
+    private static void reportThroughput(HazelcastInstance hz){
+        IMap<CreditCardKey, LinkedList<Transaction>> transactionMap = hz.getMap("transaction_history");
+        long now = System.currentTimeMillis();
+
+        Stats stats = transactionMap.aggregate(new StatsAggregator(now - 10000));
+        int txnsScored = stats.getTransactionsScored();
+        System.out.println(String.format("throughput over the last 10s: %d tps", txnsScored / 10));
     }
 
     private static void showHelp(){
