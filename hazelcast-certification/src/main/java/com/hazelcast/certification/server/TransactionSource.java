@@ -29,8 +29,9 @@ public class TransactionSource extends Thread {
     private Socket sock;
     private InputStream in;
     private Charset encoding;
-    private IMap<CreditCardKey, LinkedList<Transaction>> txnHistory;
     private IMap<String, Boolean> controller;
+    IMap<CreditCardKey, LinkedList<Transaction>> txnHistory;
+    private HazelcastInstance hz;
 
     public TransactionSource(String url, int port, HazelcastInstance hz) throws IOException {
         buffer = new byte [BUFFER_SIZE];
@@ -38,9 +39,9 @@ public class TransactionSource extends Thread {
         in = sock.getInputStream();
         running = new AtomicBoolean(true);
         encoding = Charset.forName("ASCII");
-        txnHistory = hz.getMap("transaction_history");  // if the data is not already loaded, this will potentially take a long time!
         controller = hz.getMap("controller");
         controller.set(TRANSACTION_SOURCE_ON_PARAMETER, Boolean.FALSE);
+        this.hz = hz;
         this.setDaemon(true);
     }
 
@@ -63,6 +64,7 @@ public class TransactionSource extends Thread {
         while(true){
             running = controller.get(TRANSACTION_SOURCE_ON_PARAMETER);
             if (running){
+                if (txnHistory == null) txnHistory = hz.getMap("transaction_history");  //doing this here to avoid prematurely populating the map
                 try {
                     bytesRead = bytesRead + in.read(buffer,bytesRead, buffer.length - bytesRead);
                     if (bytesRead == buffer.length){

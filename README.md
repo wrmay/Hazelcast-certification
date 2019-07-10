@@ -123,4 +123,7 @@ Leave the transaction source as is. In the original challenge, the problem is no
 # Improvements
 - make the task DataSerializable
 
-
+# Random Notes
+- We see no gets on the transaction_history map. We sent the code to the
+data by using EntryProcessors and Aggregators, so no one needed to fetch
+the data (which is big).
