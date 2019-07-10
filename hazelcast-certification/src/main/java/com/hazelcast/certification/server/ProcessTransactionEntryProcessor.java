@@ -43,7 +43,10 @@ public class ProcessTransactionEntryProcessor implements EntryProcessor<CreditCa
         return this;
     }
 
-    private Transaction prepareTransaction(String txnString) throws RuntimeException {
+    /*
+     * this is public only so it can be tested
+     */
+    public  Transaction prepareTransaction(String txnString) throws RuntimeException {
         Transaction txn = new Transaction();
         String[] cName = txnString.split(",");
         txn.setCreditCardNumber(cName[0]);
@@ -51,6 +54,7 @@ public class ProcessTransactionEntryProcessor implements EntryProcessor<CreditCa
         txn.setCountryCode(cName[2]);
         txn.setResponseCode(cName[3]);
         txn.setTxnAmt(Integer.parseInt(cName[4]));
+        txn.setTxnCurrency(cName[5]);
         txn.setMerchantType(cName[6]);
         txn.setTxnCity(cName[7]);
         txn.setTxnCode(cName[8]);
