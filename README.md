@@ -47,7 +47,7 @@ __Utilization:__ Heap on all servers around 14G / 28G.  CPU varied significantly
 
 # Instructions
 
-This project includes a dev/ops component for provisining an AWS environment.  The configuration related artifacts are all in the `cloudlab` directory.  It uses the [cloudlab](https://github.com/wrmay/cloudlab) open source project.  Cloudlab in turn uses the AWS cli. 
+This project includes a dev/ops component for provisining an AWS environment.  The configuration related artifacts are all in the `cloudlab` directory.  It uses the [cloudlab](https://github.com/wrmay/cloudlab) open source project.  Cloudlab in turn uses the AWS cli.
 
 ### Prerequisites
 
@@ -116,7 +116,7 @@ Obviously, there will be a dramatic increase in CPU utilization.
 
 
 
-Also, note the statistics on the history map. 
+Also, note the statistics on the history map.
 
 ![map stats](images/map_stats.png)
 
@@ -148,10 +148,10 @@ INFO: hz.client_0 [dev] [3.12] HazelcastClient 3.12 (20190409 - f68a315, 915d83a
 
 You can also verify the activity to some extent by logging onto the transaction generator machine and tailing the log file.
 
-First, figure out which machine it is: 
+First, figure out which machine it is:
 
 ```
-cat rmtest/inventory.ini 
+cat rmtest/inventory.ini
 ...
 [TxnGenerator]
 52.14.73.169
@@ -195,7 +195,7 @@ cloudlab rmenv rmtest
 
 END OF WALK THROUGH
 
-###Configuration File Reference
+### Configuration File Reference
 
 #### cloudlab/cloudlab_config.yaml
 
@@ -281,7 +281,7 @@ This file incudes the port that the transaction source will listen on as well as
 
 #### cloudlab/local-hazelcast-client-xml.j2
 
-This is a template that is used to generate cloudlab/ENVNAME/hazelcast-client.xml (see below). 
+This is a template that is used to generate cloudlab/ENVNAME/hazelcast-client.xml (see below).
 
 #### cloudlab/ENVNAME/aws-cloud-template.yaml
 
@@ -300,4 +300,3 @@ This is an Ansible inventory file.  It contains information that is used by Ansi
 #### cloudlab/ENVNAME/ENVNAME.pem
 
 All access to the AWS servers is via passwordless SSH.  This includes Ansible.  This file is the private key required to access the servers in the environment. Each environment has its own unique key. _No one can SSH onto the servers in this environment without this key_.
-
