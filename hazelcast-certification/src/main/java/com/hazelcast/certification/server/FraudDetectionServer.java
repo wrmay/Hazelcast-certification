@@ -1,6 +1,5 @@
 package com.hazelcast.certification.server;
 
-import com.hazelcast.certification.domain.CreditCardKey;
 import com.hazelcast.certification.domain.Transaction;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
@@ -32,7 +31,6 @@ public class FraudDetectionServer {
 	// state
 	private HazelcastInstance hazelcast;
 	private TransactionSource []transactionSources;
-	private IMap<CreditCardKey, LinkedList<Transaction>> transactionHistoryMap;
 
 	public void start() throws IOException {
 		hazelcast = Hazelcast.newHazelcastInstance();
@@ -45,10 +43,6 @@ public class FraudDetectionServer {
 		} catch(InterruptedException x){
 			//
 		}
-
-		// This will cause the transaction history to be loaded. It will take a while because there is a
-		// map loader in eager mode
-		//transactionHistoryMap = hazelcast.getMap("transaction_history");
 
 		// start transaction sources
 		transactionSources = new TransactionSource[transactionReaderThreads];

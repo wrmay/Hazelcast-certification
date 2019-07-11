@@ -1,18 +1,16 @@
 package com.hazelcast.certification.server;
 
 import com.hazelcast.certification.business.ruleengine.RuleEngine;
-import com.hazelcast.certification.domain.CreditCardKey;
 import com.hazelcast.certification.domain.FraudCheck;
 import com.hazelcast.certification.domain.Transaction;
-import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.EntryBackupProcessor;
 import com.hazelcast.map.EntryProcessor;
 
 import java.util.LinkedList;
 import java.util.Map;
 
-public class ProcessTransactionEntryProcessor implements EntryProcessor<CreditCardKey, LinkedList<Transaction>>,
-        EntryBackupProcessor<CreditCardKey, LinkedList<Transaction>>{
+public class ProcessTransactionEntryProcessor implements EntryProcessor<String, LinkedList<Transaction>>,
+        EntryBackupProcessor<String, LinkedList<Transaction>>{
 
     public ProcessTransactionEntryProcessor(String transactionString){
         this.transactionString = transactionString;
@@ -21,12 +19,12 @@ public class ProcessTransactionEntryProcessor implements EntryProcessor<CreditCa
     private String transactionString;
 
     @Override
-    public void processBackup(Map.Entry<CreditCardKey, LinkedList<Transaction>> entry) {
+    public void processBackup(Map.Entry<String, LinkedList<Transaction>> entry) {
         process(entry);
     }
 
     @Override
-    public Object process(Map.Entry<CreditCardKey, LinkedList<Transaction>> entry) {
+    public Object process(Map.Entry<String, LinkedList<Transaction>> entry) {
         Transaction transaction = prepareTransaction(transactionString);
         LinkedList<Transaction> history = entry.getValue();
         history.add(transaction);
@@ -39,7 +37,7 @@ public class ProcessTransactionEntryProcessor implements EntryProcessor<CreditCa
     }
 
     @Override
-    public EntryBackupProcessor<CreditCardKey, LinkedList<Transaction>> getBackupProcessor() {
+    public EntryBackupProcessor<String, LinkedList<Transaction>> getBackupProcessor() {
         return this;
     }
 

@@ -1,9 +1,7 @@
 package com.hazelcast.certification.util;
 
-import com.hazelcast.certification.domain.CreditCardKey;
 import com.hazelcast.certification.domain.Stats;
 import com.hazelcast.certification.domain.Transaction;
-import com.hazelcast.certification.server.FraudDetectionServer;
 import com.hazelcast.certification.server.LoadTransactionHistoryTask;
 import com.hazelcast.certification.server.TransactionSource;
 import com.hazelcast.client.HazelcastClient;
@@ -12,7 +10,6 @@ import com.hazelcast.core.IExecutorService;
 import com.hazelcast.core.IMap;
 
 import java.util.LinkedList;
-import java.util.concurrent.ExecutorService;
 
 public class Controller {
     public static void main(String []args){
@@ -72,7 +69,7 @@ public class Controller {
     }
 
     private static void reportThroughput(HazelcastInstance hz){
-        IMap<CreditCardKey, LinkedList<Transaction>> transactionMap = hz.getMap("transaction_history");
+        IMap<String, LinkedList<Transaction>> transactionMap = hz.getMap("transaction_history");
         long now = System.currentTimeMillis();
 
         Stats stats = transactionMap.aggregate(new StatsAggregator(now - 10000));

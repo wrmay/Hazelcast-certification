@@ -1,11 +1,8 @@
 package com.hazelcast.certification.server;
 
-import com.hazelcast.certification.domain.CreditCardKey;
 import com.hazelcast.certification.domain.Transaction;
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.HazelcastInstanceAware;
 import com.hazelcast.core.IMap;
-import com.hazelcast.durableexecutor.DurableExecutorService;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 
@@ -30,7 +27,7 @@ public class TransactionSource extends Thread {
     private InputStream in;
     private Charset encoding;
     private IMap<String, Boolean> controller;
-    IMap<CreditCardKey, LinkedList<Transaction>> txnHistory;
+    IMap<String, LinkedList<Transaction>> txnHistory;
     private HazelcastInstance hz;
 
     public TransactionSource(String url, int port, HazelcastInstance hz) throws IOException {
@@ -61,7 +58,7 @@ public class TransactionSource extends Thread {
 
     public void run(){
         boolean running;
-        while(true){
+         while(true){
             running = controller.get(TRANSACTION_SOURCE_ON_PARAMETER);
             if (running){
                 if (txnHistory == null) txnHistory = hz.getMap("transaction_history");  //doing this here to avoid prematurely populating the map
@@ -89,7 +86,7 @@ public class TransactionSource extends Thread {
         String txnString = rawTxnString.substring(0, rawTxnString.length() - 9);
         int i = txnString.indexOf(",");
         String ccNumber = txnString.substring(0, i);
-        txnHistory.executeOnKey(new CreditCardKey(ccNumber), new ProcessTransactionEntryProcessor(txnString));
+        txnHistory.executeOnKey(ccNumber, new ProcessTransactionEntryProcessor(txnString));
     }
 
 //    private Transaction prepareTransaction(String txnString) throws RuntimeException {

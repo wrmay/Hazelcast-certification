@@ -1,18 +1,13 @@
 package com.hazelcast.certification.util;
 
-import com.hazelcast.certification.domain.CreditCardKey;
 import com.hazelcast.certification.domain.Transaction;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.MapLoader;
 import com.hazelcast.core.MapLoaderLifecycleSupport;
-import com.hazelcast.logging.ILogger;
-import com.hazelcast.logging.Logger;
 
 import java.util.*;
 
-public class TransactionMapLoader implements MapLoader<CreditCardKey, LinkedList<Transaction>>, MapLoaderLifecycleSupport {
-
-    private static ILogger log = Logger.getLogger(TransactionMapLoader.class);
+public class TransactionMapLoader implements MapLoader<String, LinkedList<Transaction>>, MapLoaderLifecycleSupport {
 
     private static final String PRELOAD_CARD_COUNT_PROPERTY = "preload.cardCount";
     private static final String PRELOAD_TXN_COUNT_PER_CARD = "preload.txnCount";
@@ -22,27 +17,27 @@ public class TransactionMapLoader implements MapLoader<CreditCardKey, LinkedList
     private int historicalTransactionCount;
 
     // state
-    private  TransactionsUtil txnGenerator;
+    private TransactionsUtil txnGenerator;
 
 
-    public LinkedList<Transaction> load(CreditCardKey key) {
+    public LinkedList<Transaction> load(String ccNumber) {
         LinkedList<Transaction> result;
-        synchronized (txnGenerator){
-            result = txnGenerator.createAndGetCreditCardTransactions(key.getCardNumber(), historicalTransactionCount);
+        synchronized (txnGenerator) {
+            result = txnGenerator.createAndGetCreditCardTransactions(ccNumber, historicalTransactionCount);
         }
         return result;
     }
 
-    public Map<CreditCardKey, LinkedList<Transaction>> loadAll(Collection<CreditCardKey> collection) {
-        HashMap<CreditCardKey, LinkedList<Transaction>> result = new HashMap<CreditCardKey, LinkedList<Transaction>>(collection.size());
-        for(CreditCardKey cc: collection) result.put(cc, load(cc));
+    public Map<String, LinkedList<Transaction>> loadAll(Collection<String> keys) {
+        HashMap<String, LinkedList<Transaction>> result = new HashMap<>(keys.size());
+        for (String cc : keys) result.put(cc, load(cc));
         return result;
     }
 
-    public Iterable<CreditCardKey> loadAllKeys() {
-        ArrayList<CreditCardKey> result = new ArrayList<CreditCardKey>(cardCount);
-        synchronized (txnGenerator){
-            for (int i = 0; i < cardCount; ++i) result.add(new CreditCardKey(txnGenerator.generateCreditCardNumber(i)));
+    public Iterable<String> loadAllKeys() {
+        ArrayList<String> result = new ArrayList<>(cardCount);
+        synchronized (txnGenerator) {
+            for (int i = 0; i < cardCount; ++i) result.add(txnGenerator.generateCreditCardNumber(i));
         }
         return result;
     }
@@ -61,16 +56,16 @@ public class TransactionMapLoader implements MapLoader<CreditCardKey, LinkedList
         // nothing to do
     }
 
-    private int parseRequiredIntegerProp(Properties props, String propName){
+    private int parseRequiredIntegerProp(Properties props, String propName) {
         String val = props.getProperty(propName);
         int result;
-        if (val == null){
-            throw new RuntimeException(String.format("Required property not present in map loader configuration: %s.",propName));
+        if (val == null) {
+            throw new RuntimeException(String.format("Required property not present in map loader configuration: %s.", propName));
         } else {
             try {
                 result = Integer.parseInt(val);
-            } catch(NumberFormatException x){
-                throw new RuntimeException(String.format("Value of % property could not be parsed as a number: %s", propName, val));
+            } catch (NumberFormatException x) {
+                throw new RuntimeException(String.format("Value of %s property could not be parsed as a number: %s", propName, val));
             }
         }
 

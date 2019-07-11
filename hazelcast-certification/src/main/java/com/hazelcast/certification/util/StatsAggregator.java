@@ -1,7 +1,6 @@
 package com.hazelcast.certification.util;
 
 import com.hazelcast.aggregation.Aggregator;
-import com.hazelcast.certification.domain.CreditCardKey;
 import com.hazelcast.certification.domain.FraudCheck;
 import com.hazelcast.certification.domain.Stats;
 import com.hazelcast.certification.domain.Transaction;
@@ -14,7 +13,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 
-public class StatsAggregator extends  Aggregator<Map.Entry<CreditCardKey, LinkedList<Transaction>>, Stats> implements DataSerializable {
+public class StatsAggregator extends  Aggregator<Map.Entry<String, LinkedList<Transaction>>, Stats> implements DataSerializable {
 
     private long sinceTimestamp;
 
@@ -32,7 +31,7 @@ public class StatsAggregator extends  Aggregator<Map.Entry<CreditCardKey, Linked
     }
 
     @Override
-    public void accumulate(Map.Entry<CreditCardKey, LinkedList<Transaction>> entry) {
+    public void accumulate(Map.Entry<String, LinkedList<Transaction>> entry) {
         LinkedList<Transaction> history = entry.getValue();
         Iterator<Transaction> iterator = history.descendingIterator();
         while(iterator.hasNext()){

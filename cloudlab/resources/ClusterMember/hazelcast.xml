@@ -1,0 +1,41 @@
+<hazelcast xmlns="http://www.hazelcast.com/schema/config"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://www.hazelcast.com/schema/config
+           http://www.hazelcast.com/schema/config/hazelcast-config-3.12.xsd">
+
+    <license-key>YOUR LICENSE HERE</license-key>
+
+    <network>
+        <join>
+            <multicast enabled="false"/>
+            <tcp-ip enabled="true">
+                <member>10.0.0.102:5701</member>
+                <member>10.0.0.103:5701</member>
+            </tcp-ip>
+        </join>
+    </network>
+
+    <map name="transaction_history">
+        <in-memory-format>OBJECT</in-memory-format>
+        <map-store enabled="true" initial-mode="EAGER">
+            <class-name>com.hazelcast.certification.util.TransactionMapLoader</class-name>
+            <properties>
+                <property name="preload.cardCount">30000000</property>
+                <property name="preload.txnCount">20</property>
+            </properties>
+        </map-store>
+    </map>
+
+    <map name="stats">
+        <in-memory-format>OBJECT</in-memory-format>
+    </map>
+
+    <properties>
+        <property name="transaction.server.host">10.0.0.101</property>
+        <property name="transaction.server.port">8511</property>
+        <property name="transaction.reader.threads">64</property>
+        <property name="hazelcast.operation.thread.count">64</property>
+    </properties>
+
+    <management-center enabled="true">http://10.0.0.222:8080/hazelcast-mancenter</management-center>
+</hazelcast>
