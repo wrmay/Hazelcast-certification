@@ -35,7 +35,7 @@ __Additional Optimization and Notes__
 
 The best results obtained so far are summarized below.
 
-__Volume:__ 30 million cards, each with 20 million transactions.
+__Volume:__ 30 million cards, each with 20  transactions.
 
 __Infrastructure__: 10  m5.2xlarge instances running on AWS.  Each has 32G RAM and 8 vcpus (4 real cores, 8 hyperthreads)
 
