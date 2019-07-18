@@ -9,6 +9,8 @@ import com.hazelcast.map.EntryProcessor;
 import java.util.LinkedList;
 import java.util.Map;
 
+import io.prometheus.client.Counter;
+
 public class ProcessTransactionEntryProcessor implements EntryProcessor<String, LinkedList<Transaction>>,
         EntryBackupProcessor<String, LinkedList<Transaction>>{
 
@@ -18,13 +20,22 @@ public class ProcessTransactionEntryProcessor implements EntryProcessor<String, 
 
     private String transactionString;
 
+    private static final Counter transactionsProcessed = Counter.build().name("transactions_processed_total").help("total transactions processed").register();
+
+
     @Override
     public void processBackup(Map.Entry<String, LinkedList<Transaction>> entry) {
-        process(entry);
+        doProcessEntry(entry);
     }
 
     @Override
     public Object process(Map.Entry<String, LinkedList<Transaction>> entry) {
+        Object result = doProcessEntry(entry);
+        transactionsProcessed.inc();   // be careful not to count backup entries
+        return result;
+    }
+
+    private Object doProcessEntry(Map.Entry<String, LinkedList<Transaction>> entry) {
         Transaction transaction = prepareTransaction(transactionString);
         LinkedList<Transaction> history = entry.getValue();
         history.add(transaction);
@@ -35,6 +46,7 @@ public class ProcessTransactionEntryProcessor implements EntryProcessor<String, 
         entry.setValue(history); // so Hazelcast will know this is not a read only method
         return null;
     }
+
 
     @Override
     public EntryBackupProcessor<String, LinkedList<Transaction>> getBackupProcessor() {

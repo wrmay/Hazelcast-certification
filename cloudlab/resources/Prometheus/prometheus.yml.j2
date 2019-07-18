@@ -21,4 +21,5 @@ scrape_configs:
       - targets:
 {% for host in groups['ClusterMember'] %}
         - {{ hostvars[host].private_ip }}:8888
+        - {{ hostvars[host].private_ip }}:7777
 {% endfor %}

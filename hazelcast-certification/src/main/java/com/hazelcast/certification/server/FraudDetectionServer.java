@@ -6,6 +6,8 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
+import io.prometheus.client.exporter.HTTPServer;
+import io.prometheus.client.hotspot.DefaultExports;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -85,6 +87,10 @@ public class FraudDetectionServer {
 
 	public static void main(String []args) {
 		try {
+			// start Prometheus exporter
+			//DefaultExports.initialize();
+			HTTPServer server = new HTTPServer(7777);
+
 			instance = new FraudDetectionServer();
 			instance.start();
 		} catch (Exception x) {
