@@ -2,12 +2,12 @@
   region: us-east-2
   servers:
     - instance_type: m5.2xlarge
-      private_ip_addresses: [101]
+      private_ip_addresses: [201]
       roles:
         - TxnGenerator
 
     - instance_type: m5.2xlarge
-      private_ip_addresses: [102,103,104,105,106,107,108,109,110,111]
+      private_ip_addresses: [101,102,103,104,105,106,107,108]
       roles:
         - ClusterMember
 
@@ -19,6 +19,6 @@
 
   open_ports:
     TxnGenerator: [8511, 8888]
-    ClusterMember: [8888, 5701]
+    ClusterMember: [8888, 7777, 5701]
     Prometheus: [9090, 3000]
     ManCenter: [8080]
