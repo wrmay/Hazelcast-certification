@@ -30,7 +30,7 @@ _Heap Memory_
 
 ### 12 Nodes
 
-__throughput_
+_throughput_
 
 ![throughput](images/12/throughput.png)
 
