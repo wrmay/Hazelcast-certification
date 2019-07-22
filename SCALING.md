@@ -18,29 +18,29 @@ _Heap Memory_
 
 _throughput_
 
-![throughput](/Users/randy/Documents/projects/hazelcast-certification/images/10/throughput.png)
+![throughput](images/10/throughput.png)
 
 _CPU_
 
-![cpu](/Users/randy/Documents/projects/hazelcast-certification/images/10/cpu.png)
+![cpu](images/10/cpu.png)
 
 _Heap Memory_
 
-![memory](/Users/randy/Documents/projects/hazelcast-certification/images/10/memory.png)
+![memory](images/10/memory.png)
 
 ### 12 Nodes
 
 __throughput_
 
-![throughput](/Users/randy/Documents/projects/hazelcast-certification/images/12/throughput.png)
+![throughput](images/12/throughput.png)
 
 _CPU_
 
-![cpu](/Users/randy/Documents/projects/hazelcast-certification/images/12/cpu.png)
+![cpu](images/12/cpu.png)
 
 _Heap Memory_
 
-![memory](/Users/randy/Documents/projects/hazelcast-certification/images/12/memory.png)
+![memory](images/12/memory.png)
 
 ### 
 
@@ -48,29 +48,29 @@ _Heap Memory_
 
 _throughput_
 
-![throughput](/Users/randy/Documents/projects/hazelcast-certification/images/14/throughput.png)
+![throughput](images/14/throughput.png)
 
 _CPU_
 
-![cpu](/Users/randy/Documents/projects/hazelcast-certification/images/14/cpu.png)
+![cpu](images/14/cpu.png)
 
 _Heap Memory_
 
-![memory](/Users/randy/Documents/projects/hazelcast-certification/images/14/memory.png)
+![memory](images/14/memory.png)
 
 ### 16 Nodes
 
 _throughput_
 
-![throughput](/Users/randy/Documents/projects/hazelcast-certification/images/16/throughput.png)
+![throughput](images/16/throughput.png)
 
 _CPU_
 
-![cpu](/Users/randy/Documents/projects/hazelcast-certification/images/16/cpu.png)
+![cpu](images/16/cpu.png)
 
 _Heap Memory_
 
-![memory](/Users/randy/Documents/projects/hazelcast-certification/images/16/memory.png)
+![memory](images/16/memory.png)
 
 
 
