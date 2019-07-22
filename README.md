@@ -63,7 +63,7 @@ __Througput__
 
 All measurements are averaged over the final 1 minute of the test run.
 
-![throughput](images/throughput.pdf)
+![throughput](images/throughput.png	)
 
 As can be seen from the data above, throughput was generally increasing but it was also clear from the trendline that scaling was way less than linear and throughput was in fact reaching a maximum at somewhere around 130k TPS.
 
