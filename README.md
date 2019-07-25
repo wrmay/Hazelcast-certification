@@ -24,7 +24,7 @@ __Additional Optimization and Notes__
   - all data access is local
   - even the data that changes does not have to be replicated thanks to backup entry processors.
   - the work will automatically leverage the data colocated work queues and thread pools built into the Hazelcast partition threading model.  The number of independent worker threads can be set directly using the "hazelcast.operation.thread.count" property.
-- The data in the transaction history is stored in OBJECT format to avoid repeated serialization / deserialization of the large transaction history lists.  HD memory was not used because it was judged that the cost of deserializing the whole transaction list to process one transaction was assumed to be too high.  Also, in the current solution there is no sign of GC stress.
+- The data in the transaction history is stored in OBJECT format to avoid repeated serialization / deserialization of the large transaction history lists.  HD memory was not used because  the cost of deserializing the whole transaction list to process one transaction was assumed to be too high.  Also, in the current solution there is no sign of GC stress.
 - Use of Entry Processors precluded storing the data in a MultiMap, something which I otherwise would have considered.
 - _The transaction history is kept to a constant length._  As new transactions are added to the end, old transactions are removed from the beginning.  Fixing the size of the history is necessary to avoid having the work required to score a card grow in a completely unbounded fashion.  Growth from new customers can be handled by adding capacity  but having the work required to score one transaction grow unbounded would probably not be acceptable to anyone.
 - The representation of the [Transaction](https://github.com/wrmay/Hazelcast-certification/blob/master/hazelcast-certification/src/main/java/com/hazelcast/certification/domain/Transaction.java) is optimized.  Storing a lot of short strings is very inefficient.  Even an empty java String can consume 15 bytes.  Since the transactions in this system number in the hundreds of millions, some special attention for Transactions is justified.  All of the String fields (which are fixed width) are combined into a single byte array.  Getters and setters are used to pack and unpack the appropriate portion of the byte array.  [Tests](hazelcast-certification/src/test/java/TransactionTest.java) were added to ensure that this scheme actually worked correctly.  In the process, some flaws in the provided transaction generation code were discovered and corrected.  _This approach reduced the memory requirement for 2 copies of transaction data from 32G per million transactions to 8G per million_.  Note that these numbers were obtained by observing the overall memory usage of a loaded and running JVM.  They include the memory for storing transactions but they also include uncollected garbage, JVM working space and other overhead.  In other words, the numbers cannot necessarily be used to compute the in memory size of a transaction (only an upper bound).
@@ -45,7 +45,7 @@ Provisioning of the servers on AWS is automated using [cloudlab](https://github.
 
 
 
-# Results Overview
+# Results 
 
 The best results obtained so far are summarized below. Tests were run for 8,10,12,14 and 16 node clusters. Details can be found in [a separate document](SCALING.md).	
 
@@ -67,7 +67,35 @@ All measurements are averaged over the final 1 minute of the test run.
 
 As can be seen from the data above, throughput was generally increasing but it was also clear from the trendline that scaling was way less than linear and throughput was in fact reaching a maximum at somewhere around 130k TPS.
 
-# Instructions
+
+
+# Further Investigation
+
+#### Investigation: Has the Transaction Source Become a Limiting Factor ?
+
+The 16 node cluster was re-deployed with 2 transaction sources. Another baseline was run and the results were compared.  Results from that investigation can be found [here](investigations/multiple_transaction_sources).  Adding a second transation server did not improve anything.
+
+Another intersting thing was noticed.  On the 16 node test, CPU was farely low.  The graph of CPU utilization was a bit hard to interpret. 
+
+![cpu_utilization](investigations/multiple_transaction_sources/2sources.cpu.png)
+
+
+
+Adding all of the CPU utilizations together provides a clearer picture.  There were 16 servers in this test so in the following graph, all 16 servers running at 100% CPU would be reprsented by a value of 16.
+
+![sum_cpu](investigations/multiple_transaction_sources/2sources.sumcpu.png)
+
+
+
+During the test, the CPU utilization across all members is around 3/8.  Clearly there is some other limiting factor because, as nodes were added, overall CPU utilization went down.  This investigation shows that it is not simply a matter of the transaction source being a bottleneck.
+
+Since each transaction is 100 bytes, 130kTPS = 13mBytes/sec ~ 130mbits/second.
+
+
+
+
+
+# Usage
 
 This project includes a dev/ops component for provisining an AWS environment.  The configuration related artifacts are all in the `cloudlab` directory.  It uses the [cloudlab](https://github.com/wrmay/cloudlab) open source project.  Cloudlab in turn uses the AWS cli.
 

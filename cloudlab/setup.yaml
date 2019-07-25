@@ -78,8 +78,19 @@
       - name: copy config files and scripts into place
         become: no
         copy:
-          src: resources/ClusterMember/
+          src: resources/ClusterMember/{{ item }}
           dest: /home/ec2-user/hazelcast-certification
+        loop:
+          - jmx_exporter_config.yaml
+          - supervisord.conf
+
+      - name: render hazelcast.xml
+        become: no
+        template:
+          src: resources/ClusterMember/hazelcast.xml.j2
+          dest: /home/ec2-user/hazelcast-certification/hazelcast.xml
+          lstrip_blocks: yes
+          trim_blocks: yes
 
       - name: download the Prometheus java exporter
         become: no
