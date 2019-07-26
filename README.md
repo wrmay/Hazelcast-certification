@@ -89,9 +89,17 @@ Adding all of the CPU utilizations together provides a clearer picture.  There w
 
 During the test, the CPU utilization across all members is around 3/8.  Clearly there is some other limiting factor because, as nodes were added, overall CPU utilization went down.  This investigation shows that it is not simply a matter of the transaction source being a bottleneck.
 
-Since each transaction is 100 bytes, 130kTPS = 13mBytes/sec ~ 130mbits/second.
+#### Investigation: Is Networking a limiting factor ?
+
+Another possible culprit could be a limitation of networking. Since each transaction is 100 bytes, 130kTPS = 13mBytes/sec ~ 130mbits/second.  Nowhere near the network capacity which must be at least 1 gigabit/sec.
+
+However, comparing packets/second and bytes/second reveals data out rate of 700M bytes/sec and 3M packets/second meaning packets are on average about 233 bytes, which is quite small.
+
+![aws_metrics](investigations/multiple_transaction_sources/aws_metrics_for_114.png)
 
 
+
+ 
 
 
 
