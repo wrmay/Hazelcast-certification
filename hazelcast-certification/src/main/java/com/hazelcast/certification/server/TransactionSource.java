@@ -83,7 +83,8 @@ public class TransactionSource extends Thread {
 
     private void process() {
         String rawTxnString = new String(buffer, encoding);
-        String txnString = rawTxnString.substring(0, rawTxnString.length() - 9);
+        int z = rawTxnString.indexOf(0);
+        String txnString = rawTxnString.substring(0, z);
         int i = txnString.indexOf(",");
         String ccNumber = txnString.substring(0, i);
         txnHistory.executeOnKey(ccNumber, new ProcessTransactionEntryProcessor(txnString));
