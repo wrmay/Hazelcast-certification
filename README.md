@@ -109,7 +109,13 @@ This did not improve throughput.
 
 #### Investigation: Can the transactions be distributed to the cluster members any faster ?
 
-A "no op" entry processor will be implemented and the throughput measured.
+A "no op" entry processor was implemented and the throughput measured.  This showed that there is still some room for improvement.  The throughput was about 187k TPS on a 16 node cluster.
+
+![tput](investigations/noop_entry_processor/throughput.png)
+
+
+
+![cpu](investigations/noop_entry_processor/cpu.png)
 
 
 
