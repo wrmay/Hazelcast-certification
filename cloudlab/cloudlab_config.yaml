@@ -2,7 +2,7 @@
   region: us-east-2
   servers:
     - instance_type: m5.2xlarge
-      private_ip_addresses: [201, 202]
+      private_ip_addresses: [201]
       roles:
         - TxnGenerator
 
