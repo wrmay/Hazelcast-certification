@@ -99,7 +99,11 @@ However, comparing packets/second and bytes/second reveals data out rate of 700M
 
 
 
- 
+ #### Investigation: Increase Parallel Processing by Increasing Number of Partitions
+
+The default number of partitions divided over two 16 members yields 16 to 17 partitions per members.  Doubling the number of partitions may help improve parallelism.
+
+
 
 
 

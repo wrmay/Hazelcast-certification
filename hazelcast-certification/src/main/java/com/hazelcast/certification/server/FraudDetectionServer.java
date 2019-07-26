@@ -39,12 +39,6 @@ public class FraudDetectionServer {
 
 		configure(hazelcast.getConfig().getProperties());
 
-		// wait 10s for other members to join before we start loading data and pulling transactions
-		try {
-			Thread.sleep(10000);
-		} catch(InterruptedException x){
-			//
-		}
 
 		// start transaction sources
 		transactionSources = new TransactionSource[transactionReaderThreads];
