@@ -105,6 +105,14 @@ The default number of partitions divided over two 16 members yields 16 to 17 par
 
 
 
+This did not improve throughput.
+
+#### Investigation: Can the transactions be distributed to the cluster members any faster ?
+
+A "no op" entry processor will be implemented and the throughput measured.
+
+
+
 
 
 # Usage
