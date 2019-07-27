@@ -32,6 +32,11 @@
       <statistics-enabled>true</statistics-enabled>
     </map>
 
+    <executor-service name="transaction_processor">
+      <pool-size>64</pool-size>
+      <queue-capacity>20000</queue-capacity>
+    </executor-service>
+
     <properties>
   {% if (private_ip[-3:]|int) % 2 == 0 %}
         <property name="transaction.server.host">10.0.0.201</property>
@@ -40,9 +45,8 @@
   {% endif %}
         <property name="transaction.server.port">8511</property>
         <property name="transaction.reader.threads">64</property>
-        <!-- this gives each partition its own partition thread -->
-        <property name="hazelcast.operation.thread.count">34</property>
-        <property name="hazelcast.partition.count">543</property>
+        <property name="hazelcast.operation.thread.count">64</property>
+        <property name="hazelcast.partition.count">1031</property>
     </properties>
 
     <management-center enabled="true">http://10.0.0.222:8080/hazelcast-mancenter</management-center>
