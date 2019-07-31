@@ -10,7 +10,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TransactionSource extends Thread {
@@ -29,8 +31,10 @@ public class TransactionSource extends Thread {
     private IMap<String, Boolean> controller;
     IMap<String, LinkedList<Transaction>> txnHistory;
     private HazelcastInstance hz;
+    private ThreadPoolExecutor workerThreads;
+    private LinkedList<Future<Boolean>> pendingResults;
 
-    public TransactionSource(String url, int port, HazelcastInstance hz) throws IOException {
+    public TransactionSource(String url, int port, HazelcastInstance hz, ThreadPoolExecutor workerThreads) throws IOException {
         buffer = new byte [BUFFER_SIZE];
         sock = new Socket(url, port);
         in = sock.getInputStream();
@@ -39,6 +43,8 @@ public class TransactionSource extends Thread {
         controller = hz.getMap("controller");
         controller.set(TRANSACTION_SOURCE_ON_PARAMETER, Boolean.FALSE);
         this.hz = hz;
+        this.workerThreads = workerThreads;
+        pendingResults = new LinkedList<>();
         this.setDaemon(true);
     }
 
@@ -87,7 +93,34 @@ public class TransactionSource extends Thread {
         String txnString = rawTxnString.substring(0, z);
         int i = txnString.indexOf(",");
         String ccNumber = txnString.substring(0, i);
-        txnHistory.executeOnKey(ccNumber, new ProcessTransactionEntryProcessor(txnString));
+        process(ccNumber, txnString);
+    }
+
+    private void process(String ccNumber, String txnString){
+        try {
+            pendingResults.offerLast(workerThreads.submit(new Callable<Boolean>(){
+                public Boolean call(){
+                    return (Boolean) txnHistory.executeOnKey(ccNumber, new ProcessTransactionEntryProcessor(txnString));
+                }
+            }));
+        } catch(RejectedExecutionException x){
+            // this means we have the maximum number of transactions in flight
+            // and must wait for all of the pending transactions to complete
+            Future<Boolean> result = pendingResults.pollFirst();
+            while(result != null){
+                try {
+                    result.get();
+                } catch(InterruptedException ix){
+                    log.warning("timed out waiting for result of entry processor");
+                } catch(ExecutionException ex){
+                    log.severe("IMap.executeOnKey threw an exception", x);
+                }
+
+                result = pendingResults.pollFirst();
+            }
+
+            process(ccNumber, txnString);
+        }
     }
 
 //    private Transaction prepareTransaction(String txnString) throws RuntimeException {

@@ -12,6 +12,10 @@ import io.prometheus.client.hotspot.DefaultExports;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Properties;
+import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -24,26 +28,31 @@ public class FraudDetectionServer {
 	private static final String TRANSACTION_SERVER_HOST_PROP  = "transaction.server.host";
 	private static final String TRANSACTION_SERVER_PORT_PROP  = "transaction.server.port";
 	private static final String TRANSACTION_READER_THREADS_PROP  = "transaction.reader.threads";
+	private static final String TRANSACTION_WORKER_THREADS_PROP  = "transaction.worker.threads";
 
 	// configuration
 	private int transactionServerPort;
 	private String transactionServerHost;
 	private int transactionReaderThreads;
+	private int transactionWorkerThreads;
 
 	// state
 	private HazelcastInstance hazelcast;
 	private TransactionSource []transactionSources;
+	private ThreadPoolExecutor  workerThreads;
 
 	public void start() throws IOException {
 		hazelcast = Hazelcast.newHazelcastInstance();
 
 		configure(hazelcast.getConfig().getProperties());
 
+		// create the worker thread pool
+		workerThreads = new ThreadPoolExecutor(transactionWorkerThreads, transactionWorkerThreads, 0, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(true), new ThreadPoolExecutor.AbortPolicy());
 
 		// start transaction sources
 		transactionSources = new TransactionSource[transactionReaderThreads];
 		for (int i = 0; i < transactionReaderThreads; ++i) {
-			transactionSources[i] = new TransactionSource(transactionServerHost, transactionServerPort, hazelcast);
+			transactionSources[i] = new TransactionSource(transactionServerHost, transactionServerPort, hazelcast, workerThreads);
 			transactionSources[i].start();
 		}
 
@@ -58,6 +67,7 @@ public class FraudDetectionServer {
 
 		transactionServerPort = requiredIntegerProperty(props, TRANSACTION_SERVER_PORT_PROP);
 		transactionReaderThreads = requiredIntegerProperty(props, TRANSACTION_READER_THREADS_PROP);
+		transactionWorkerThreads = requiredIntegerProperty(props, TRANSACTION_WORKER_THREADS_PROP);
 	}
 
 	private int requiredIntegerProperty(Properties props, String propertyName){

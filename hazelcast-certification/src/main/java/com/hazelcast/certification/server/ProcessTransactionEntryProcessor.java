@@ -44,7 +44,7 @@ public class ProcessTransactionEntryProcessor implements EntryProcessor<String, 
         re.executeRules();
         transaction.setFraudCheck(new FraudCheck(re.isFraudTxn(), re.getFailedTest()));
         entry.setValue(history); // so Hazelcast will know this is not a read only method
-        return null;
+        return Boolean.valueOf(re.isFraudTxn());
     }
 
 
