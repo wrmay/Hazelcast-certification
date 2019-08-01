@@ -72,6 +72,53 @@ _Heap Memory_
 
 ![memory](images/16/memory.png)
 
+### 16 nodes + increased partitions
+
+_throughput_
+
+![throughput](images/16_more_partitions/throughput.png)
+
+_CPU_
+
+![cpu](images/16_more_partitions/cpu.png)
 
 
-### 
+
+_Heap Memory_
+
+![memory](images/16_more_partitions/memory.png)
+
+
+
+_Transaction Generator CPU Time_
+
+![transaction generator cpu](images/16_more_partitions/transaction_generator_cpu.png)
+
+
+
+### 16 nodes + increased partitions + increased readers
+
+_throughput_
+
+![throughput](images/16_more_partitions_more_readers/throughput2.png)
+
+
+
+
+
+_CPU_
+
+![cpu](images/16_more_partitions_more_readers/cpu.png)
+
+
+
+_Heap Memory_
+
+![memory](images/16_more_partitions_more_readers/memory.png)
+
+
+
+_Transaction Generator CPU Time_
+
+![transaction generator cpu](images/16_more_partitions_more_readers/transaction_generator_cpu.png)
+
