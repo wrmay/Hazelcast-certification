@@ -29,7 +29,7 @@ __Additional Optimization and Notes__
 - _The transaction history is kept to a constant length._  As new transactions are added to the end, old transactions are removed from the beginning.  Fixing the size of the history is necessary to avoid having the work required to score a card grow in a completely unbounded fashion.  Growth from new customers can be handled by adding capacity  but having the work required to score one transaction grow unbounded would probably not be acceptable to anyone.
 - The representation of the [Transaction](https://github.com/wrmay/Hazelcast-certification/blob/master/hazelcast-certification/src/main/java/com/hazelcast/certification/domain/Transaction.java) is optimized.  Storing a lot of short strings is very inefficient.  Even an empty java String can consume 15 bytes.  Since the transactions in this system number in the hundreds of millions, some special attention for Transactions is justified.  All of the String fields (which are fixed width) are combined into a single byte array.  Getters and setters are used to pack and unpack the appropriate portion of the byte array.  [Tests](hazelcast-certification/src/test/java/TransactionTest.java) were added to ensure that this scheme actually worked correctly.  In the process, some flaws in the provided transaction generation code were discovered and corrected.  _This approach reduced the memory requirement for 2 copies of transaction data from 32G per million transactions to 8G per million_.  Note that these numbers were obtained by observing the overall memory usage of a loaded and running JVM.  They include the memory for storing transactions but they also include uncollected garbage, JVM working space and other overhead.  In other words, the numbers cannot necessarily be used to compute the in memory size of a transaction (only an upper bound).
 - The [rule engine](hazelcast-certification/src/main/java/com/hazelcast/certification/business/ruleengine/RuleEngine.java) has been modified with "short circuiting" logic.  Once a transaction is determined to be fraudulent based on one rule, the subsequent rules are not executed since they could not change the outcome.
-- The number of partition threads (hazelcast.operation.thread.count) and the number of thread used to pull transactions were both set to 64.  Experiment showed that the default value did not fully utilize the machine and that increase one without the other did not result in increased throughput.
+- The number of partition threads (hazelcast.operation.thread.count) and the number of thread used to pull transactions were both set to 64 for all of the initial test runs.  Experiment showed that the default value did not fully utilize the machine and that increase one without the other did not result in increased throughput.
 
 __Instrumentation__
 
@@ -47,7 +47,7 @@ Provisioning of the servers on AWS is automated using [cloudlab](https://github.
 
 # Results 
 
-The best results obtained so far are summarized below. Tests were run for 8,10,12,14 and 16 node clusters. Details can be found in [a separate document](SCALING.md).	
+The best results obtained so far are summarized below. Tests were run for 8,10,12,14 and 16 node clusters. Details can be found in [a separate document](SCALING.md).	In short, the best results obtained so far was 153K TPS using 16 nodes.  This appeared to max out the single-threaded transaction server.
 
 
 
@@ -59,19 +59,25 @@ __JVM Settings__: -Xms28g -Xmx28g -Xmn4g -XX:+UseParNewGC -XX:+UseConcMarkSweepG
 
 
 
-__Througput__
+__Scaling Study__
 
 All measurements are averaged over the final 1 minute of the test run.
 
-![throughput](images/throughput.png	)
+![throughput](images/throughput.png)
 
 As can be seen from the data above, throughput was generally increasing but it was also clear from the trendline that scaling was way less than linear and throughput was in fact reaching a maximum at somewhere around 130k TPS.
 
+At this point, several different investigations were pursued. Eventually, based on the observation that CPU on the cluster members was fairly low, an attempt was made to increase the parallelism.  
+
+**Improvement 1:** increase "hazelcast.operation.thread.count" to 128 and transaction reader threads to 128.  Increase the number of paritions (hazelcast.partition.count) to 2063.  Increasing the partition count was necessary because it was realized that the number of operation threads per member would never exceed the number of partitions per member.  On a 16 node cluster, each member would have only 16 or 17 partitions.  2063 was chosen because it is the first prime number larger than the minimum number which would be 16 nodes x 128 threads = 2048.  This boosted throughput to about 140k TPS.
+
+__Improvement 2:__ It was noticed that the  cluster members only had around 50% utilized so it was theorized that there were not enough transaction reader threads.  Accordingly the transaction reader threads were increased to 192 and the tests were repeated.  This time , the throughput was around 153k TPS and running "top" on the transaction source showed a CPU time of over 100% (overall CPU _utilization_ was much lower because its an 8 core machine) . Given that the transaction source is single threaded, it probably could not go much faster.
 
 
-# Further Investigation
 
-#### Investigation: Has the Transaction Source Become a Limiting Factor ?
+# Other Investigations
+
+#### Has the Transaction Source Become a Limiting Factor ? No
 
 The 16 node cluster was re-deployed with 2 transaction sources. Another baseline was run and the results were compared.  Results from that investigation can be found [here](investigations/multiple_transaction_sources).  Adding a second transation server did not improve anything.
 
@@ -89,7 +95,7 @@ Adding all of the CPU utilizations together provides a clearer picture.  There w
 
 During the test, the CPU utilization across all members is around 3/8.  Clearly there is some other limiting factor because, as nodes were added, overall CPU utilization went down.  This investigation shows that it is not simply a matter of the transaction source being a bottleneck.
 
-#### Investigation: Is Networking a limiting factor ?
+#### Is Networking a limiting factor ? No
 
 Another possible culprit could be a limitation of networking. Since each transaction is 100 bytes, 130kTPS = 13mBytes/sec ~ 130mbits/second.  Nowhere near the network capacity which must be at least 1 gigabit/sec.
 
@@ -98,10 +104,6 @@ However, comparing packets/second and bytes/second reveals data out rate of 700M
 ![aws_metrics](investigations/multiple_transaction_sources/aws_metrics_for_114.png)
 
 
-
- #### Investigation: Increase Parallel Processing by Increasing Number of Partitions
-
-The default number of partitions divided over two 16 members yields 16 to 17 partitions per members.  Doubling the number of partitions may help improve parallelism.
 
 
 

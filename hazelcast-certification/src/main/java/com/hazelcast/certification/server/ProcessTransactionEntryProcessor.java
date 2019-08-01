@@ -3,6 +3,7 @@ package com.hazelcast.certification.server;
 import com.hazelcast.certification.business.ruleengine.RuleEngine;
 import com.hazelcast.certification.domain.FraudCheck;
 import com.hazelcast.certification.domain.Transaction;
+import com.hazelcast.core.Offloadable;
 import com.hazelcast.map.EntryBackupProcessor;
 import com.hazelcast.map.EntryProcessor;
 
@@ -12,7 +13,7 @@ import java.util.Map;
 import io.prometheus.client.Counter;
 
 public class ProcessTransactionEntryProcessor implements EntryProcessor<String, LinkedList<Transaction>>,
-        EntryBackupProcessor<String, LinkedList<Transaction>>{
+        EntryBackupProcessor<String, LinkedList<Transaction>>, Offloadable {
 
     public ProcessTransactionEntryProcessor(String transactionString){
         this.transactionString = transactionString;
@@ -71,4 +72,8 @@ public class ProcessTransactionEntryProcessor implements EntryProcessor<String, 
         return txn;
     }
 
+    @Override
+    public String getExecutorName() {
+        return "transaction_processor";
+    }
 }
