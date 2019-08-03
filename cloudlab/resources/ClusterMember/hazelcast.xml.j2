@@ -27,6 +27,10 @@
         <statistics-enabled>true</statistics-enabled>
     </map>
 
+    <map name="unprocessed_transactions">
+      <in-memory-format>OBJECT</in-memory-format>
+    </map>
+
     <map name="inbox">
       <in-memory-format>OBJECT</in-memory-format>
       <statistics-enabled>true</statistics-enabled>
@@ -41,12 +45,14 @@
   {% if (private_ip[-3:]|int) % 2 == 0 %}
         <property name="transaction.server.host">10.0.0.201</property>
   {% else %}
-        <property name="transaction.server.host">10.0.0.201</property>
+        <property name="transaction.server.host">10.0.0.202</property>
   {% endif %}
         <property name="transaction.server.port">8511</property>
-        <property name="transaction.reader.threads">192</property>
-        <property name="hazelcast.operation.thread.count">128</property>
+        <property name="transaction.reader.threads">16</property>
+        <property name="hazelcast.operation.thread.count">8</property>
+<!--
         <property name="hazelcast.partition.count">2063</property>
+-->
     </properties>
 
     <management-center enabled="true">http://10.0.0.222:8080/hazelcast-mancenter</management-center>

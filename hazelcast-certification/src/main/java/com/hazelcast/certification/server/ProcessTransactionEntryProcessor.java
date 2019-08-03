@@ -4,6 +4,8 @@ import com.hazelcast.certification.business.ruleengine.RuleEngine;
 import com.hazelcast.certification.domain.FraudCheck;
 import com.hazelcast.certification.domain.Transaction;
 import com.hazelcast.core.Offloadable;
+import com.hazelcast.logging.ILogger;
+import com.hazelcast.logging.Logger;
 import com.hazelcast.map.EntryBackupProcessor;
 import com.hazelcast.map.EntryProcessor;
 
@@ -13,7 +15,9 @@ import java.util.Map;
 import io.prometheus.client.Counter;
 
 public class ProcessTransactionEntryProcessor implements EntryProcessor<String, LinkedList<Transaction>>,
-        EntryBackupProcessor<String, LinkedList<Transaction>>, Offloadable {
+        EntryBackupProcessor<String, LinkedList<Transaction>> {
+
+    private static ILogger log = Logger.getLogger(ProcessTransactionEntryProcessor.class);
 
     public ProcessTransactionEntryProcessor(String transactionString){
         this.transactionString = transactionString;
@@ -37,14 +41,20 @@ public class ProcessTransactionEntryProcessor implements EntryProcessor<String, 
     }
 
     private Object doProcessEntry(Map.Entry<String, LinkedList<Transaction>> entry) {
-        Transaction transaction = prepareTransaction(transactionString);
-        LinkedList<Transaction> history = entry.getValue();
-        history.add(transaction);
-        history.removeFirst(); // keep it at a constant size
-        RuleEngine re = new RuleEngine(transaction, history);
-        re.executeRules();
-        transaction.setFraudCheck(new FraudCheck(re.isFraudTxn(), re.getFailedTest()));
-        entry.setValue(history); // so Hazelcast will know this is not a read only method
+        try {
+            Transaction transaction = prepareTransaction(transactionString);
+            LinkedList<Transaction> history = entry.getValue();
+            if (history == null) log.warning("HISTORY IS NULL");
+            history.add(transaction);
+            history.removeFirst(); // keep it at a constant size
+            RuleEngine re = new RuleEngine(transaction, history);
+            re.executeRules();
+            transaction.setFraudCheck(new FraudCheck(re.isFraudTxn(), re.getFailedTest()));
+            entry.setValue(history); // so Hazelcast will know this is not a read only method
+        } catch(Exception x){
+            log.warning("Exception during processing", x);
+            throw x;
+        }
         return null;
     }
 
@@ -72,8 +82,4 @@ public class ProcessTransactionEntryProcessor implements EntryProcessor<String, 
         return txn;
     }
 
-    @Override
-    public String getExecutorName() {
-        return "transaction_processor";
-    }
 }

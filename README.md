@@ -30,13 +30,13 @@ __Additional Optimization and Notes__
 - Transactions are kept in String format as long as possible to minimize additional serialization and deserialization.  Specifically, tranactions are sent to the entry processor as Strings not Transaciton objects.
 - The representation of the [Transaction](https://github.com/wrmay/Hazelcast-certification/blob/master/hazelcast-certification/src/main/java/com/hazelcast/certification/domain/Transaction.java) is optimized.  Storing a lot of short strings is very inefficient.  Even an empty java String can consume 15 bytes.  Since the transactions in this system number in the hundreds of millions, some special attention for Transactions is justified.  All of the String fields (which are fixed width) are combined into a single byte array.  Getters and setters are used to pack and unpack the appropriate portion of the byte array.  [Tests](hazelcast-certification/src/test/java/TransactionTest.java) were added to ensure that this scheme actually worked correctly.  In the process, some flaws in the provided transaction generation code were discovered and corrected.  _This approach reduced the memory requirement for 2 copies of transaction data from 32G per million transactions to 8G per million_.  Note that these numbers were obtained by observing the overall memory usage of a loaded and running JVM.  They include the memory for storing transactions but they also include uncollected garbage, JVM working space and other overhead.  In other words, the numbers cannot necessarily be used to compute the in memory size of a transaction (only an upper bound).
 - The [rule engine](hazelcast-certification/src/main/java/com/hazelcast/certification/business/ruleengine/RuleEngine.java) has been modified with "short circuiting" logic.  Once a transaction is determined to be fraudulent based on one rule, the subsequent rules are not executed since they could not change the outcome.
-- The number of partition threads (hazelcast.operation.thread.count) and the number of thread used to pull transactions were both set to 64 for all of the initial test runs.  Experiment showed that the default value did not fully utilize the machine and that increase one without the other did not result in increased throughput.
+- The throughput of the system was very sensitive to  the balance of partition threads (hazelcast.operation.thread.count) vs. transaction reader threads.  Trial and error was required to find a good balance.
 
-Also, here are the statistics on history map during a run.
+- Also, here are the statistics on history map during a run.
 
-![map stats](/Users/randy/Documents/projects/hazelcast-certification/images/map_stats.png)
+  ![map stats](/Users/randy/Documents/projects/hazelcast-certification/images/map_stats.png)
 
-_Note there are no gets!_. This is because we are using entry processors and aggregators  to send the processing to the data.  That data does not need to be fetched by anyone.
+  _Note there are no gets!_. This is because we are using entry processors and aggregators  to send the processing to the data.  That data does not need to be fetched by anyone.
 
 __Instrumentation__
 
@@ -54,7 +54,13 @@ Provisioning of the servers on AWS is automated using [cloudlab](https://github.
 
 # Results 
 
-The best results obtained so far are summarized below. Tests were run for 8,10,12,14 and 16 node clusters. Details can be found in [a separate document](SCALING.md).	In short, the best results obtained so far was 153K TPS using 16 nodes.  This appeared to max out the single-threaded transaction server.
+The initial series of tests yielded fairly good results with 153k TPS on 16 servers.  However, this architecture showed some scaling problems and it was difficult to obtain good utilization of all of the available CPUs.  
+
+To address this, the architecture was revised to perform pipelining.  Instead of each transaction reader thread synchronously invoking an entry processor, the transaction readers were modified to call "submitToKey" with a callback.  A (non-distributed) blocking queue of finite capacity was used limit the number of transactions that could be "in flight". 
+
+
+
+The best results obtained so far are summarized below. Tests were run for 8,10,12,14 and 16 node clusters. Detailed results can be found in [a separate document](TEST_RESULTS.md).	In short, the best results obtained so far was 153K TPS using 16 nodes.  This appeared to max out the single-threaded transaction server.
 
 __Volume:__ 30 million cards, each with 20  transactions.
 
@@ -128,4 +134,25 @@ A "no op" entry processor was implemented and the throughput measured.  This sho
 
 The transaction source was fully utilizing 1 CPU so this probably represents a limit to the throughput using a single Transaction Source.
 
+#### how fast can transactions be processed, ignoring network ? 
+
+A single thread running on a laptop can do 10k - 20k TPS.  See [ProcessingTimeTest.java](src/test/java/ProcessingTimeTest.java).  Sample output is below.
+
+```
+Processed 10000 transactions in 698ms. Single thread speed limit is 14326 tps
+```
+
+
+
+#### What is the Round Trip Time between servers in the AWS VPC ?
+
+Roughly .15ms based on [this simple test program](src/main/java/com/hazelcast/certification/util/TestClient.java).  Sample output is below:
+
+```
+Put 10000 entries in 1542ms.  Estimated RTT is 0.154200ms.
+```
+
+Note that "ping" does not work in the AWS VPC.  Note also that , while .15ms is fast, processing one transaction takes around .07ms or half the round trip time. 
+
+_If transactions are delivered one at a time to the correct data node for processing, then this result suggest that there should be 3x as many client threads (i.e. the threads that deliver the request) as worker threads._
 

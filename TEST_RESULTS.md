@@ -1,5 +1,9 @@
 # Details of Scaling Experiment
 
+## Synchronous Architecture
+
+
+
 ### 8 Nodes
 
 _throughput_
@@ -121,4 +125,14 @@ _Heap Memory_
 _Transaction Generator CPU Time_
 
 ![transaction generator cpu](images/16_more_partitions_more_readers/transaction_generator_cpu.png)
+
+## Pipelining Architecture
+
+### 8 nodes
+
+_throughput_
+
+_CPU_
+
+_Heap_
 
