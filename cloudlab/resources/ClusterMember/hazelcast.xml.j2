@@ -31,10 +31,8 @@
     <properties>
   {% if (private_ip[-3:]|int) % 3 == 0 %}
         <property name="transaction.server.host">10.0.0.201</property>
-  {% elif (private_ip[-3:]|int) % 3 == 1 %}
-        <property name="transaction.server.host">10.0.0.202</property>
   {% else %}
-        <property name="transaction.server.host">10.0.0.203</property>
+        <property name="transaction.server.host">10.0.0.201</property>
   {% endif %}
         <property name="transaction.server.port">8511</property>
         <property name="transaction.reader.threads">16</property>

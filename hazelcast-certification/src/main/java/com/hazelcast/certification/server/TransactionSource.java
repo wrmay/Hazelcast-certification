@@ -13,7 +13,6 @@ import java.io.InputStream;
 import java.net.Socket;
 import java.nio.charset.Charset;
 import java.util.LinkedList;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TransactionSource extends Thread {
@@ -24,9 +23,6 @@ public class TransactionSource extends Thread {
     private final static int TRANSACTION_SIZE = 100;
     public static final String TRANSACTION_SOURCE_ON_PARAMETER = "transaction_source_on";
 
-    private static final Counter transactionsSubmitted = Counter.build().name("transactions_submitted_total").help("total transactions saved").register();
-    private static final Counter transactionsStored = Counter.build().name("transactions_stored_total").help("total transactions saved").register();
-    private static final Counter transactionsNotStored = Counter.build().name("transactions_not_stored_total").help("total transactions saved").register();
     private static final Counter exceptions = Counter.build().name("transaction_source_exceptions_total").help("total transactions saved").register();
 
     private byte []buffer;
@@ -36,7 +32,6 @@ public class TransactionSource extends Thread {
     private InputStream in;
     private Charset encoding;
     private IMap<String, Boolean> controller;
-    private LinkedBlockingQueue<String> inFlightTransactions;
     IMap<String, LinkedList<Transaction>> txnHistory;
     private HazelcastInstance hz;
 
@@ -49,7 +44,6 @@ public class TransactionSource extends Thread {
         controller = hz.getMap("controller");
         controller.set(TRANSACTION_SOURCE_ON_PARAMETER, Boolean.FALSE);
         this.hz = hz;
-        this.inFlightTransactions = new LinkedBlockingQueue<>(1000);
         this.setDaemon(true);
     }
 
@@ -99,36 +93,10 @@ public class TransactionSource extends Thread {
             String txnString = rawTxnString.substring(0, z);
             int i = txnString.indexOf(",");
             String ccNumber = txnString.substring(0, i);
-            try {
-                inFlightTransactions.put(txnString);  // blocks to provide back pressure
-            } catch(InterruptedException ix){
-                log.severe("Unexpected Exception");
-            }
-            txnHistory.submitToKey(ccNumber,new ProcessTransactionEntryProcessor(txnString), new EntryStoredCallback(txnString));
-            transactionsSubmitted.inc();
+            txnHistory.executeOnKey(ccNumber, new ProcessTransactionEntryProcessor(txnString));
         }
     }
 
-    private  class EntryStoredCallback implements ExecutionCallback<Object> {
-
-        private String txn;
-
-        public EntryStoredCallback(String txn){
-            this.txn = txn;
-        }
-
-        @Override
-        public void onResponse(Object o) {
-            inFlightTransactions.remove(txn);
-            transactionsStored.inc();
-        }
-
-        @Override
-        public void onFailure(Throwable throwable) {
-            inFlightTransactions.remove(txn);
-            transactionsNotStored.inc();
-        }
-    }
 
 //    private Transaction prepareTransaction(String txnString) throws RuntimeException {
 //        Transaction txn = new Transaction();
