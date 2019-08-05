@@ -74,7 +74,7 @@ __Scaling Study__
 
 All measurements are averaged over the final 1 minute of the test run.
 
-![throughput](images/throughput.png)
+![results](results.png)
 
 If this is hard to see, you can view [the original spreadsheet](https://github.com/wrmay/Hazelcast-certification/raw/master/throughput.xlsx).
 

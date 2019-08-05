@@ -1,6 +1,6 @@
 # Details of Scaling Experiment
 
-## Synchronous Architecture
+## Base Architecture
 
 
 
@@ -126,13 +126,178 @@ _Transaction Generator CPU Time_
 
 ![transaction generator cpu](images/16_more_partitions_more_readers/transaction_generator_cpu.png)
 
-## Pipelining Architecture
+## Base Architecture + EP Pipelining
 
 ### 8 nodes
 
 _throughput_
 
+![throughput](images/pipeline_8/throughput.png)
+
 _CPU_
+
+![cpu](images/pipeline_8/cpu.png)
 
 _Heap_
 
+![heap](images/pipeline_8/memory.png)
+
+### 12 nodes
+
+_throughput_
+
+![throughput](images/pipeline_12/throughput.png)
+
+_CPU_
+
+![cpu](images/pipeline_12/cpu.png)
+
+_Heap_
+
+![heap](images/pipeline_12/memory.png)
+
+### 16 nodes
+
+_throughput_
+
+![throughput](images/pipeline_16/throughput.png)
+
+_CPU_
+
+![cpu](images/pipeline_16/cpu.png)
+
+_Heap_
+
+![heap](images/pipeline_16/memory.png)
+
+### 20 nodes
+
+_throughput_
+
+![throughput](images/pipeline_20/throughput.png)
+
+_CPU_
+
+![cpu](images/pipeline_20/cpu.png)
+
+_Heap_
+
+![heap](images/pipeline_20/memory.png)
+
+## Base Architecture + Network Level Batching 
+
+### 8 nodes
+
+_throughput_
+
+![throughput](images/netbatch_8/throughput.png)
+
+_CPU_
+
+![cpu](images/netbatch_8/cpu.png)
+
+_Heap_
+
+![heap](images/netbatch_8/memory.png)
+
+### 12 nodes
+
+_throughput_
+
+![throughput](images/netbatch_12/throughput.png)
+
+_CPU_
+
+![cpu](images/netbatch_12/cpu.png)
+
+_Heap_
+
+![heap](images/netbatch_12/memory.png)
+
+### 16 nodes
+
+_throughput_
+
+![throughput](images/pipeline_16/throughput.png)
+
+_CPU_
+
+![cpu](images/netbatch_16/cpu.png)
+
+_Heap_
+
+![heap](images/netbatch_16/memory.png)
+
+### 20 nodes
+
+_throughput_
+
+![throughput](images/pipeline_20/throughput.png)
+
+_CPU_
+
+![cpu](images/netbatch_20/cpu.png)
+
+_Heap_
+
+![heap](images/netbatch_20/memory.png)
+
+## Base Architecture + EP Pipelining + Network Level Batching - WINNER
+
+### 8 nodes
+
+_throughput_
+
+![throughput](images/pipeline_netbatch_8/throughput.png)
+
+_CPU_
+
+![cpu](images/pipeline_netbatch_8/cpu.png)
+
+_Heap_
+
+![heap](images/netbatch_8/memory.png)
+
+### 12 nodes
+
+_throughput_
+
+![throughput](images/pipeline_netbatch_12/throughput.png)
+
+_CPU_
+
+![cpu](images/pipeline_netbatch_12/cpu.png)
+
+_Heap_
+
+![heap](images/netbatch_12/memory.png)
+
+### 16 nodes
+
+_throughput_
+
+![throughput](images/pipeline_netbatch_16/throughput.png)
+
+_CPU_
+
+![cpu](images/pipeline_netbatch_16/cpu.png)
+
+_Heap_
+
+![heap](images/netbatch_16/memory.png)
+
+### 20 nodes
+
+_throughput_
+
+![throughput](images/pipeline_netbatch_20/throughput.png)
+
+_CPU_
+
+![cpu](images/pipeline_netbatch_20/cpu.png)
+
+_Heap_
+
+![heap](images/netbatch_20/memory.png)
+
+## 
