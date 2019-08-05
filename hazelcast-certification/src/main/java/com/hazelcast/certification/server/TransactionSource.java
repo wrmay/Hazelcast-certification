@@ -20,7 +20,8 @@ public class TransactionSource extends Thread {
 
     private ILogger log = Logger.getLogger(TransactionSource.class);
 
-    private final static int BUFFER_SIZE = 100;
+    private final static int BUFFER_SIZE = 10000;
+    private final static int TRANSACTION_SIZE = 100;
     public static final String TRANSACTION_SOURCE_ON_PARAMETER = "transaction_source_on";
 
     private static final Counter transactionsSubmitted = Counter.build().name("transactions_submitted_total").help("total transactions saved").register();
@@ -92,18 +93,20 @@ public class TransactionSource extends Thread {
     }
 
     private void process() {
-        String rawTxnString = new String(buffer, encoding);
-        int z = rawTxnString.indexOf(0);
-        String txnString = rawTxnString.substring(0, z);
-        int i = txnString.indexOf(",");
-        String ccNumber = txnString.substring(0, i);
-        try {
-            inFlightTransactions.put(txnString);  // blocks to provide back pressure
-        } catch(InterruptedException ix){
-            log.severe("Unexpected Exception");
+        for (int offset = 0;  (offset + TRANSACTION_SIZE) <= BUFFER_SIZE; offset += TRANSACTION_SIZE){
+            String rawTxnString = new String(buffer,offset, TRANSACTION_SIZE,encoding);
+            int z = rawTxnString.indexOf(0);
+            String txnString = rawTxnString.substring(0, z);
+            int i = txnString.indexOf(",");
+            String ccNumber = txnString.substring(0, i);
+            try {
+                inFlightTransactions.put(txnString);  // blocks to provide back pressure
+            } catch(InterruptedException ix){
+                log.severe("Unexpected Exception");
+            }
+            txnHistory.submitToKey(ccNumber,new ProcessTransactionEntryProcessor(txnString), new EntryStoredCallback(txnString));
+            transactionsSubmitted.inc();
         }
-        txnHistory.submitToKey(ccNumber,new ProcessTransactionEntryProcessor(txnString), new EntryStoredCallback(txnString));
-        transactionsSubmitted.inc();
     }
 
     private  class EntryStoredCallback implements ExecutionCallback<Object> {
