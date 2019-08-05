@@ -27,29 +27,14 @@
         <statistics-enabled>true</statistics-enabled>
     </map>
 
-    <map name="unprocessed_transactions">
-      <in-memory-format>OBJECT</in-memory-format>
-    </map>
-
-    <map name="inbox">
-      <in-memory-format>OBJECT</in-memory-format>
-      <statistics-enabled>true</statistics-enabled>
-    </map>
-
-    <executor-service name="transaction_processor">
-      <pool-size>64</pool-size>
-      <queue-capacity>20000</queue-capacity>
-    </executor-service>
 
     <properties>
-  {% if (private_ip[-3:]|int) % 4 == 0 %}
+  {% if (private_ip[-3:]|int) % 3 == 0 %}
         <property name="transaction.server.host">10.0.0.201</property>
-  {% elif (private_ip[-3:]|int) % 4 == 1 %}
+  {% elif (private_ip[-3:]|int) % 3 == 1 %}
         <property name="transaction.server.host">10.0.0.202</property>
-  {% elif (private_ip[-3:]|int) % 4 == 2 %}
-        <property name="transaction.server.host">10.0.0.203</property>
   {% else %}
-        <property name="transaction.server.host">10.0.0.204</property>
+        <property name="transaction.server.host">10.0.0.203</property>
   {% endif %}
         <property name="transaction.server.port">8511</property>
         <property name="transaction.reader.threads">16</property>
