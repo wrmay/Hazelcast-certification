@@ -151,8 +151,6 @@ cloudlab rmenv rmtest
 
 
 
-END OF WALK THROUGH
-
 ### Configuration File Reference
 
 #### cloudlab/cloudlab_config.yaml

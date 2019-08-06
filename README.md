@@ -1,3 +1,11 @@
+# Contents
+
+This document describes the primary findings.  Many tests were run on AWS infrastructure.  To faciliate rapid test cycles, reusable machinery was developed.  It should be possible for anyone to quickly duplicate these results using the same machinery.  For instructions on that, see [USAGE.md](USAGE.md).
+
+The raw details of each test run can be found in [TEST_RESULTS.md](TEST_RESULTS.md).
+
+Various related side inquiries were documented [here](INVESTIGATIONS.md) and [here](https://github.com/wrmay/threads-and-events).
+
 # Certification Problem Overview
 
 The problem is to build a system that scores credit card transactions using the provided rule engine and transaction generation code.  
@@ -52,15 +60,7 @@ Provisioning of the servers on AWS is automated using [cloudlab](https://github.
 
 
 
-# Results 
-
-The initial series of tests yielded fairly good results with 153k TPS on 16 servers.  However, this architecture showed some scaling problems and it was difficult to obtain good utilization of all of the available CPUs.  
-
-To address this, the architecture was revised to perform pipelining.  Instead of each transaction reader thread synchronously invoking an entry processor, the transaction readers were modified to call "submitToKey" with a callback.  A (non-distributed) blocking queue of finite capacity was used limit the number of transactions that could be "in flight". 
-
-
-
-The best results obtained so far are summarized below. Tests were run for 8,10,12,14 and 16 node clusters. Detailed results can be found in [a separate document](TEST_RESULTS.md).	In short, the best results obtained so far was 153K TPS using 16 nodes.  This appeared to max out the single-threaded transaction server.
+# Infrastructure
 
 __Volume:__ 30 million cards, each with 20  transactions.
 
@@ -68,91 +68,152 @@ __Infrastructure__: m5.2xlarge instances running on AWS.  Each has 32G RAM and 8
 
 __JVM Settings__: -Xms28g -Xmx28g -Xmn4g -XX:+UseParNewGC -XX:+UseConcMarkSweepGC (note that CompressedOOPs is enabled by default).
 
+# Results 
 
+The table below shows the results of testing several alternatives at different scales.  The units are all thousands of transactions per second.  Detailed results, throughput, CPU and heap utiulization for each  run can be found in [a separate document](TEST_RESULTS.md).	
 
-__Scaling Study__
+| Nodes | Base Architecture | Base + 1031 partitions and 128 readers | Base + 2063 partitions and 192 readers | Base + EP Pipelining | Base +Network Batching | Base +EP Pipelining and Network Batching |
+| ----- | ----------------- | -------------------------------------- | -------------------------------------- | -------------------- | ---------------------- | ---------------------------------------- |
+| 8     | 102               |                                        |                                        | 138                  | 97                     | 193                                      |
+| 10    | 113               |                                        |                                        |                      |                        |                                          |
+| 12    | 124               |                                        |                                        | 156                  | 115                    | 267                                      |
+| 14    | 116               |                                        |                                        |                      |                        |                                          |
+| 16    | 138               | 140                                    | 153                                    | 166                  | 141                    | **323**                                  |
+| 18    |                   |                                        |                                        |                      |                        |                                          |
+| 20    |                   |                                        |                                        | 170                  | 161                    | *                                        |
 
-All measurements are averaged over the final 1 minute of the test run.
+The initial series of tests yielded fairly good results with 138 TPS on 16 servers.  However, this architecture showed  scaling problems and it did not use all of the available CPU.  The chart below shows the throughput measured on the base architecture runs fitted with a quadratic trend line (see also the [results spreadsheet](results.xlsx)).  As can be seen, the trend line flattens out at around 16 servers so no further benefit would be expected from adding servers.
 
-![results](results.png)
-
-If this is hard to see, you can view [the original spreadsheet](https://github.com/wrmay/Hazelcast-certification/raw/master/throughput.xlsx).
-
-As can be seen from the data above, throughput  generally increased as nodes were added but it is  clear from the trendline that scaling was way less than linear and throughput was in fact reaching a maximum at somewhere around 130k TPS.
-
-At this point, several different investigations were pursued. Eventually, based on the observation that CPU on the cluster members was fairly low, an attempt was made to increase the parallelism.  Those are shown as separate points on the graph above.
-
-**Improvement 1:** increase "hazelcast.operation.thread.count" to 128 and transaction reader threads to 128.  Increase the number of paritions (hazelcast.partition.count) to 2063.  Increasing the partition count was necessary because it was realized that the number of operation threads per member would never exceed the number of partitions per member.  On a 16 node cluster, each member would have only 16 or 17 partitions with the default setting of 271.  2063 was chosen because it is the first prime number larger than the minimum number which would be 16 nodes x 128 threads = 2048.  This boosted throughput to about 140k TPS.
-
-__Improvement 2:__ It was theorized that there were not enough transaction reader threads.  The transaction reader threads were increased to 192 and the tests were repeated.  This time , the throughput was around 153k TPS and running "top" on the transaction source showed a CPU time of over 100% for the transaction generator process.  Given that the transaction source is single threaded, it probably could not go much faster.  Note that overall CPU _utilization_ was much lower because its an 8 core machine .
-
-
-
-# Other Investigations
-
-#### Has the Transaction Source Become a Limiting Factor ? No
-
-The 16 node cluster was re-deployed with 2 transaction sources. Another baseline was run and the results were compared.  Results from that investigation can be found [here](investigations/multiple_transaction_sources).  Adding a second transation server did not improve anything.
-
-Another interesting thing was noticed.  On the 16 node test, CPU was farely low.  The graph of CPU utilization was a bit hard to interpret. 
-
-![cpu_utilization](investigations/multiple_transaction_sources/2sources.cpu.png)
+![base_tput](base.png)
 
 
 
-Adding all of the CPU utilizations together provides a clearer picture.  There were 16 servers in this test so in the following graph, all 16 servers running at 100% CPU would be reprsented by a value of 16.
+This chart shows the CPU utilization during the 16 node test run.
 
-![sum_cpu](investigations/multiple_transaction_sources/2sources.sumcpu.png)
+![base_16_cpu](images/16/cpu.png)
 
+Since most of the work is done on partition threads, dramatically increasing both the number of partitions and the number of partition threads was tried.  A [side investigation](https://github.com/wrmay/threads-and-events) was also conducted which indicated that the cost of thread context switching on a JVM is quite low.   This yielded a throughput of 153k TPS but CPU utilization did not increase dramatically indicating some other limiting factor.  
 
+__Round 2__
 
-During the test, the CPU utilization across all members is around 3/8.  Clearly there is some other limiting factor because, as nodes were added, overall CPU utilization went down.  This investigation shows that it is not simply a matter of the transaction source being a bottleneck.
+Each transaction is scored by invoking an entry processor using the `IMap.executeOnKey` method.  While the entry is waiting to be processed, the caller thread can do nothing but wait.  Ideally it would do some useful work like reading the next transaction. In theory, this could be addressed by simply increasing the number of threads.  The idea being that while one thread is waiting the JVM will select and execute another thread. However, as can be seen in the 3rd and 4th columns in the table above, the results of this approach were not dramatic.
 
-#### Is Networking a limiting factor ? No
+To address this, the architecture was revised to perform "entry processor pipelining".  Instead of each transaction reader thread synchronously invoking an entry processor, the transaction readers were modified to call "submitToKey" with a callback.  A (non-distributed) blocking queue of finite capacity was used limit the number of transactions that could be "in flight".  See the code blocks below.
 
-Another possible culprit could be a limitation of networking. Since each transaction is 100 bytes, 130kTPS = 13mBytes/sec ~ 130mbits/second.  Nowhere near the network capacity which must be at least 1 gigabit/sec.
+BEFORE
 
-However, comparing packets/second and bytes/second reveals data out rate of 700M bytes/sec and 3M packets/second meaning packets are on average about 233 bytes, which is quite small.
-
-![aws_metrics](investigations/multiple_transaction_sources/aws_metrics_for_114.png)
-
-
-
-
-
-#### Investigation: Can the transactions be distributed to the cluster members any faster ?
-
-A "no op" entry processor was implemented and the throughput measured.  This showed that there is still some room for improvement.  The throughput was about 187k TPS on a 16 node cluster.
-
-![tput](investigations/noop_entry_processor/throughput.png)
-
-
-
-![cpu](investigations/noop_entry_processor/cpu.png)
-
-
-
-The transaction source was fully utilizing 1 CPU so this probably represents a limit to the throughput using a single Transaction Source.
-
-#### how fast can transactions be processed, ignoring network ? 
-
-A single thread running on a laptop can do 10k - 20k TPS.  See [ProcessingTimeTest.java](src/test/java/ProcessingTimeTest.java).  Sample output is below.
+```java
+    private void process() {
+        String rawTxnString = new String(buffer, encoding);
+        int z = rawTxnString.indexOf(0);
+        String txnString = rawTxnString.substring(0, z);
+        int i = txnString.indexOf(",");
+        String ccNumber = txnString.substring(0, i);
+        txnHistory.executeOnKey(ccNumber, new ProcessTransactionEntryProcessor(txnString));
+    }
 
 ```
-Processed 10000 transactions in 698ms. Single thread speed limit is 14326 tps
+
+AFTER
+
+```java
+ private void process() {
+        String rawTxnString = new String(buffer, encoding);
+        int z = rawTxnString.indexOf(0);
+        String txnString = rawTxnString.substring(0, z);
+        int i = txnString.indexOf(",");
+        String ccNumber = txnString.substring(0, i);
+        try {
+            inFlightTransactions.put(txnString);  // blocks to provide back pressure
+        } catch(InterruptedException ix){
+            log.severe("Unexpected Exception");
+        }
+        txnHistory.submitToKey(ccNumber,new ProcessTransactionEntryProcessor(txnString), new EntryStoredCallback(txnString));
+        transactionsSubmitted.inc();
+    }
 ```
 
+Also, two transaction servers were used for the 12 and 16 node runs, and 3 for the 20 node run.  This was done to eliminate the concern that the single threaded transaction servers would max out.
+
+At 8 servers, this architecture matched the base architecture throughput of 138k TPS with 16 servers.  However, at higher scale, only a modest improvement was observed  with 166k TPS on 16 nodes and 170k TPS on 20 nodes. Note that the last 4 servers only increased throughput by 4K TPS.
+
+![ep pipelining](ep_pipelining.png)
 
 
-#### What is the Round Trip Time between servers in the AWS VPC ?
 
-Roughly .15ms based on [this simple test program](src/main/java/com/hazelcast/certification/util/TestClient.java).  Sample output is below:
+
+
+__Round 3__
+
+The results up to this point seem to  indicate some limiting resource.  The problem itself is "embarrasingly parallel" and the architecure is set up to exploit it.  The author was very confident that there were no fundamental architectural flaws.  The only other shared resources seem to be the transaction generator itself and the network.  The possibility of the single threaded transactions server becoming a limiting factor was mitigated (even in round 2) by running multiple.  
+
+`iperf3` was used to test network throughput which tested above 10 Mbits/second or about 1.2G bytes/second.  The image below shows the AWS metrics for one of the servers during a high load test run.
+
+![aws metrics](investigations/multiple_transaction_sources/aws_metrics_for_114.png)
+
+It was noticed that, while utilization was high, at roughly .7 G bytes/second, it was not necessarily at capacity.  The other interesting thing is that, comparing the network throughput in bytes and in packets, one can see that _each packet is only about 230 bytes_.  At this size, a large portion of the packet is consumed with packet headers.
+
+The way that the application used the network was then scrutinized. The reason for the small packets is as follows.   Each [transaction reader thread](hazelcast-certification/src/main/java/com/hazelcast/certification/server/TransactionSource.java) reads 100 bytes (the size of one transaction) and then processes it using an entry processor.  The network stack will fill the socket buffer and then 100 bytes will be consumed, leaving 100 bytes room in the buffer.  Unless the bytes are consumed as fast as they can be delivered, the consumer will send a 100 byte TCP window and the sender will "throttle back" accordingly.  This means that the sender will only send 100 bytes before waiting for an acknowledgement.  The network round trip time was measure at around .15ms (see [INVESTIGATIONS.md](INVESTIGATIONS.md)) but 100 bytes / .15ms = 100 / .00015 = 667k bytes a second on each socket and also 6.7k  transactions per second on each reader thread.  Even though the small TCP window is bad, the math here does not suggest that the TCP window is the direct cause but the small packets are a problem for another reason.  
+
+Getting back to the shared resource hypothesis, _it is theorized that the infrastructure effectively has a speed limit in terms of packets/second (not bytes/second)_ .  Examples of potential sources include a firewall that has to examine each packet or intentional packets/second rate limiting enforced by the AWS infrastructure.  _On this theory, the transaction reader was modified to pull 100 transactions worth of bytes at a time._  This allows the network to send more than 100 bytes in each packet.  With 100x more data being sent in each packet, any "packets per second" speed limit will be avoided or at least deferred.  The source code for this modification is below (compare to the same method above - the only addition is the "for"  loop).
+
+```java
+    private void process() {
+        for (int offset = 0;  (offset + TRANSACTION_SIZE) <= BUFFER_SIZE; offset += TRANSACTION_SIZE){
+            String rawTxnString = new String(buffer,offset, TRANSACTION_SIZE,encoding);
+            int z = rawTxnString.indexOf(0);
+            String txnString = rawTxnString.substring(0, z);
+            int i = txnString.indexOf(",");
+            String ccNumber = txnString.substring(0, i);
+            try {
+                inFlightTransactions.put(txnString);  // blocks to provide back pressure
+            } catch(InterruptedException ix){
+                log.severe("Unexpected Exception");
+            }
+            txnHistory.submitToKey(ccNumber,new ProcessTransactionEntryProcessor(txnString), new EntryStoredCallback(txnString));
+            transactionsSubmitted.inc();
+        }
+    }
 
 ```
-Put 10000 entries in 1542ms.  Estimated RTT is 0.154200ms.
-```
 
-Note that "ping" does not work in the AWS VPC.  Note also that , while .15ms is fast, processing one transaction takes around .07ms or half the round trip time. 
+The results were dramatic!
 
-_If transactions are delivered one at a time to the correct data node for processing, then this result suggest that there should be 3x as many client threads (i.e. the threads that deliver the request) as worker threads._
+![best](best.png)
+
+
+
+_Throughput went all the way to 193k TPS on 8 servers, adding 4 more servers gains 69K TPS and the next 4 adds 56K TPS for a high TPS of 323K TPS on 16 servers.  Although this is not linear, it is certainly much closer.  Furthermore, the problem has become CPU bound, a clear indicator that there had been a network related bottleneck before._
+
+![cpu bound](images/pipeline_netbatch_16/cpu.png)
+
+
+
+__Going Further__
+
+A very interesting thing was observed for the 20 node test using this architecture.  Below are the throughput , CPU and memory graphs for that test.
+
+![funny thing 1](images/pipeline_netbatch_20/throughput.png)
+
+![funny 2](images/pipeline_netbatch_20/cpu.png)
+
+
+
+![funny 3](images/pipeline_netbatch_20/memory.png)
+
+
+
+For comparison, here is the throughput graph from the 16 node test.
+
+![throughput 16](images/pipeline_netbatch_16/throughput.png)
+
+It can be seen that the "waves" have a 150 second period , that all servers are affected at the same time, and that the waves do not correspond to garbage collection activity.  It is theorized that this is some sort of rate limit enforced by the AWS infrastructure but it has not been investigated any further at this time.
+
+# A Note About Fault Tolerance
+
+The solution stores all of the transaction history in a redundant map but if a server is lost, transactions that have been read from the source and not yet scored will be lost.  With the base line architecture, each reader thread can have 1 transaction in flight.  With the later architectures, many more transactions can be in flight.  
+
+This is unavoidable with the problem as posed.  The cluster members must pull the transactions from the transaction source and even saving the transactions into a replicated data structure before processing would not solve the problem.  With a "push", if the recipient fails to receive for any reason, it becomes the responsibility of the "pusher" to retry.  With the pull architecture, if the "puller" fails there is no one to retry and the pulled event is lost.
+
+The best way to handle this in a real system if for the source to be "replayable".  This is of course exactly the approach implemented by Kafka and other Enterprise event streaming solutions.  Also, it is worth noting that source replayability is a requirement for reliable event processing in Jet. 
 
