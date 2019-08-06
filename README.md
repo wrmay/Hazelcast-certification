@@ -42,7 +42,7 @@ __Additional Optimization and Notes__
 
 - Also, here are the statistics on history map during a run.
 
-  ![map stats](/Users/randy/Documents/projects/hazelcast-certification/images/map_stats.png)
+  ![map stats](images/map_stats.png)
 
   _Note there are no gets!_. This is because we are using entry processors and aggregators  to send the processing to the data.  That data does not need to be fetched by anyone.
 
