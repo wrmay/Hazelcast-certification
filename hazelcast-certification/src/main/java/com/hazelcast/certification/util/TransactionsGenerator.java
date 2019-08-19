@@ -1,5 +1,6 @@
 package com.hazelcast.certification.util;
 
+import com.hazelcast.certification.domain.Transaction;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 
@@ -238,7 +239,9 @@ public class TransactionsGenerator implements Runnable {
     	int counter = getNextCounter();
     	if (count % 10000 == 0) log.info("sending txn number " + count);
 		String creditCardNumber = txnUtil.generateCreditCardNumber(counter);
-    	return txnUtil.createAndGetCreditCardTransaction(creditCardNumber, counter);
+		String result = txnUtil.createAndGetCreditCardTransaction(creditCardNumber, counter, true);
+
+    	return result;
     }
 
     public static void main(String []arg) {

@@ -25,6 +25,7 @@ public class TransactionMapLoader implements MapLoader<String, LinkedList<Transa
         synchronized (txnGenerator) {
             result = txnGenerator.createAndGetCreditCardTransactions(ccNumber, historicalTransactionCount);
         }
+        Collections.sort(result);
         return result;
     }
 

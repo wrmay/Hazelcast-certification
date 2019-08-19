@@ -1,26 +1,30 @@
 package com.hazelcast.certification.business.ruleengine;
 
 import com.hazelcast.certification.domain.Transaction;
+import com.hazelcast.certification.util.TransactionHistoryContainer;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 import org.joda.time.DateTime;
 
 import java.text.ParseException;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Stream;
 
 public final class RuleEngine {
 
 	private final static ILogger log = Logger.getLogger(RuleEngine.class);
 
 	private Transaction currentTxn;
-	private List<Transaction> historicalTxns;
+	private TransactionHistoryContainer historicalTxns;
 	private boolean detectionResult;
 	private int failedTest;
 	private DateTime dateTime;
 
-	public RuleEngine(Transaction currentTxn, List<Transaction> historicalTxns) {
+	public RuleEngine(Transaction currentTxn, LinkedList<Transaction> historicalTxns) {
 		this.currentTxn = currentTxn;
-		this.historicalTxns = historicalTxns;
+		this.historicalTxns = new TransactionHistoryContainer(historicalTxns,90);
 		detectionResult = false;
 
 

@@ -33,13 +33,23 @@ public class TransactionsUtil {
 	 * @return concatenated Transaction String made of all variables separated by comma (,)
 	 */
 	public String createAndGetCreditCardTransaction(String creditCardNumber, int code) {
+		return createAndGetCreditCardTransaction(creditCardNumber, code, false);
+	}
+
+	public String createAndGetCreditCardTransaction(String creditCardNumber, int code, boolean currentTimestamp ) {
 
 		StringBuffer txn = new StringBuffer();
 		String countryCode= generateCountryCode();
 
-		txn.append(creditCardNumber)
-				.append(",").append(generateTimeStamp())
-				.append(",").append(countryCode)
+		txn.append(creditCardNumber);
+
+		txn.append(",");
+		if (currentTimestamp)
+			txn.append(DateTime.now().getMillis());
+		else
+			txn.append(generateTimeStamp());
+
+		txn.append(",").append(countryCode)
 				.append(",").append(generateResponseCode(code))
 				.append(",").append(generateTxnAmount())
 				.append(",").append(countryCode)
@@ -52,6 +62,7 @@ public class TransactionsUtil {
 		return txn.toString();
 	}
 
+
 	/**
 	 * Create dummy transactions for the given credit card number
 	 * 
@@ -61,8 +72,7 @@ public class TransactionsUtil {
 	 *            number of historical transactions to create
 	 * @return List of transactions for a credit card
 	 */
-	public LinkedList<Transaction> createAndGetCreditCardTransactions(
-			String creditCardNumber, int txnCount) {
+	public LinkedList<Transaction> createAndGetCreditCardTransactions(String creditCardNumber, int txnCount) {
 		LinkedList<Transaction> transactions = new LinkedList<Transaction>();
 		for (int j = 0; j < txnCount; j++) {
 

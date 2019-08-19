@@ -11,7 +11,7 @@ import java.io.Serializable;
  * Object representation of incoming and historical transaction
  *
  */
-public class Transaction implements DataSerializable, Serializable {
+public class Transaction implements DataSerializable, Serializable, Comparable<Transaction> {
 
 	private long timeStamp;
 	private int txnAmount;
@@ -137,5 +137,12 @@ public class Transaction implements DataSerializable, Serializable {
 		txnAmount = objectDataInput.readInt();
 		fraudCheck = objectDataInput.readObject();
 		stringFields = objectDataInput.readByteArray();
+	}
+
+	@Override
+	public int compareTo(Transaction o) {
+		if (this == o) return 0;
+
+		return Long.compare(this.timeStamp, o.timeStamp);
 	}
 }
