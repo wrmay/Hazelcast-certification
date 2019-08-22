@@ -1,16 +1,12 @@
 package com.hazelcast.certification.business.ruleengine;
 
 import com.hazelcast.certification.domain.Transaction;
-import com.hazelcast.certification.util.TransactionHistoryContainer;
+import com.hazelcast.certification.domain.TransactionHistoryContainer;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 import org.joda.time.DateTime;
 
 import java.text.ParseException;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.stream.Stream;
 
 public final class RuleEngine {
 
@@ -22,9 +18,9 @@ public final class RuleEngine {
 	private int failedTest;
 	private DateTime dateTime;
 
-	public RuleEngine(Transaction currentTxn, LinkedList<Transaction> historicalTxns) {
+	public RuleEngine(Transaction currentTxn,TransactionHistoryContainer historicalTxns) {
 		this.currentTxn = currentTxn;
-		this.historicalTxns = new TransactionHistoryContainer(historicalTxns,90);
+		this.historicalTxns = new TransactionHistoryContainer(90);
 		detectionResult = false;
 
 

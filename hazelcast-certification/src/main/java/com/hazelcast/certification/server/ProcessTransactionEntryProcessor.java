@@ -3,20 +3,18 @@ package com.hazelcast.certification.server;
 import com.hazelcast.certification.business.ruleengine.RuleEngine;
 import com.hazelcast.certification.domain.FraudCheck;
 import com.hazelcast.certification.domain.Transaction;
-import com.hazelcast.certification.util.TransactionHistoryContainer;
-import com.hazelcast.core.Offloadable;
+import com.hazelcast.certification.domain.TransactionHistoryContainer;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 import com.hazelcast.map.EntryBackupProcessor;
 import com.hazelcast.map.EntryProcessor;
 
-import java.util.LinkedList;
 import java.util.Map;
 
 import io.prometheus.client.Counter;
 
-public class ProcessTransactionEntryProcessor implements EntryProcessor<String, LinkedList<Transaction>>,
-        EntryBackupProcessor<String, LinkedList<Transaction>> {
+public class ProcessTransactionEntryProcessor implements EntryProcessor<String, TransactionHistoryContainer>,
+        EntryBackupProcessor<String, TransactionHistoryContainer> {
 
     private static ILogger log = Logger.getLogger(ProcessTransactionEntryProcessor.class);
 
@@ -31,23 +29,23 @@ public class ProcessTransactionEntryProcessor implements EntryProcessor<String, 
 
 
     @Override
-    public void processBackup(Map.Entry<String, LinkedList<Transaction>> entry) {
+    public void processBackup(Map.Entry<String,TransactionHistoryContainer> entry) {
         doProcessEntry(entry);
     }
 
     @Override
-    public Object process(Map.Entry<String, LinkedList<Transaction>> entry) {
+    public Object process(Map.Entry<String, TransactionHistoryContainer> entry) {
         Object result = doProcessEntry(entry);
         transactionsProcessed.inc();   // be careful not to count backup entries
         return result;
     }
 
-    private Object doProcessEntry(Map.Entry<String, LinkedList<Transaction>> entry) {
+    private Object doProcessEntry(Map.Entry<String, TransactionHistoryContainer> entry) {
         try {
             Transaction transaction = prepareTransaction(transactionString);
-            LinkedList<Transaction> history = entry.getValue();
+            TransactionHistoryContainer history = entry.getValue();
             if (history == null) log.warning("HISTORY IS NULL");
-            history.addLast(transaction);
+            history.add(transaction);
             RuleEngine re = new RuleEngine(transaction, history);
             re.executeRules();
             transaction.setFraudCheck(new FraudCheck(re.isFraudTxn(), re.getFailedTest()));
@@ -62,7 +60,7 @@ public class ProcessTransactionEntryProcessor implements EntryProcessor<String, 
 
 
     @Override
-    public EntryBackupProcessor<String, LinkedList<Transaction>> getBackupProcessor() {
+    public EntryBackupProcessor<String, TransactionHistoryContainer> getBackupProcessor() {
         return this;
     }
 

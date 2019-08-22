@@ -64,23 +64,51 @@ Provisioning of the servers on AWS is automated using [cloudlab](https://github.
 
 __Volume:__ 30 million cards, each with 20  transactions.
 
-__Infrastructure__: m5.2xlarge instances running on AWS.  Each has 32G RAM and 8 vcpus (4 real cores, 8 hyperthreads)
+__Infrastructure__:
 
-__JVM Settings__: -Xms28g -Xmx28g -Xmn4g -XX:+UseParNewGC -XX:+UseConcMarkSweepGC (note that CompressedOOPs is enabled by default).
+-  (rounds 1-3) m5.2xlarge instances running on AWS.  Each has 32G RAM and 8 vcpus (4 real cores, 8 hyperthreads)
+- (rounds 4+) r5.2x large instances. 64G RAM and 8 vcpu (same CPU as above but  2x memory)
+
+__JVM Settings__: 
+
+- (rounds 1-3) -Xms28g -Xmx28g -Xmn4g -XX:+UseParNewGC -XX:+UseConcMarkSweepGC (note that CompressedOOPs is enabled by default).
+
+- (round 4) -Xms60g -Xmx60g -Xmn6g -XX:+UseConcMarkSweepGC -XX:+CMSParallelRemarkEnabled -XX:+UseCMSInitiatingOccupancyOnly -XX:CMSInitiatingOccupancyFraction=70 -XX:+ScavengeBeforeFullGC -XX:+CMSScavengeBeforeRemark
+
+  
 
 # Results 
 
 The table below shows the results of testing several alternatives at different scales.  The units are all thousands of transactions per second.  Detailed results, throughput, CPU and heap utiulization for each  run can be found in [a separate document](TEST_RESULTS.md).	
 
-| Nodes | Base Architecture | Base + 1031 partitions and 128 readers | Base + 2063 partitions and 192 readers | Base + EP Pipelining | Base +Network Batching | Base +EP Pipelining and Network Batching |
-| ----- | ----------------- | -------------------------------------- | -------------------------------------- | -------------------- | ---------------------- | ---------------------------------------- |
-| 8     | 102               |                                        |                                        | 138                  | 97                     | 193                                      |
-| 10    | 113               |                                        |                                        |                      |                        |                                          |
-| 12    | 124               |                                        |                                        | 156                  | 115                    | 267                                      |
-| 14    | 116               |                                        |                                        |                      |                        |                                          |
-| 16    | 138               | 140                                    | 153                                    | 166                  | 141                    | **323**                                  |
-| 18    |                   |                                        |                                        |                      |                        |                                          |
-| 20    |                   |                                        |                                        | 170                  | 161                    | *                                        |
+| Nodes | Base Architecture | 1a   | 1b   | 2    | X    | 3    | 4    |
+| ----- | ----------------- | ---- | ---- | ---- | ---- | ---- | ---- |
+| 6     |                   |      |      |      |      |      | 232  |
+| 8     | 102               |      |      | 138  | 97   | 193  |      |
+| 10    | 113               |      |      |      |      |      |      |
+| 12    | 124               |      |      | 156  | 115  | 267  | 442  |
+| 14    | 116               |      |      |      |      |      |      |
+| 16    | 138               | 140  | 153  | 166  | 141  | 323  |      |
+| 18    |                   |      |      |      |      |      | 663  |
+| 20    |                   |      |      | 170  | 161  |      |      |
+
+
+
+Round 1: Entry processor based solution with OBJECT serialization
+
+Round 1a: Increase reader threads to 128, Partitions to 1031
+
+Round 1b: Increase reader threads to 192, Partitions to 2063
+
+Round 2: Round 1 + Implement Entry Processor Pipelining 
+
+Round X: Round 1 + Network Batching 
+
+Round 3: Round 2 + Network Batching
+
+Round 4: Round 3 + 90 day enforcement and custom container for transaction history
+
+
 
 The initial series of tests yielded fairly good results with 138 TPS on 16 servers.  However, this architecture showed  scaling problems and it did not use all of the available CPU.  The chart below shows the throughput measured on the base architecture runs fitted with a quadratic trend line (see also the [results spreadsheet](results.xlsx)).  As can be seen, the trend line flattens out at around 16 servers so no further benefit would be expected from adding servers.
 
@@ -94,7 +122,7 @@ This chart shows the CPU utilization during the 16 node test run.
 
 Since most of the work is done on partition threads, dramatically increasing both the number of partitions and the number of partition threads was tried.  A [side investigation](https://github.com/wrmay/threads-and-events) was also conducted which indicated that the cost of thread context switching on a JVM is quite low.   This yielded a throughput of 153k TPS but CPU utilization did not increase dramatically indicating some other limiting factor.  
 
-__Round 2__
+__Round 2: add EntryProcessor Pipelining__
 
 Each transaction is scored by invoking an entry processor using the `IMap.executeOnKey` method.  While the entry is waiting to be processed, the caller thread can do nothing but wait.  Ideally it would do some useful work like reading the next transaction. In theory, this could be addressed by simply increasing the number of threads.  The idea being that while one thread is waiting the JVM will select and execute another thread. However, as can be seen in the 3rd and 4th columns in the table above, the results of this approach were not dramatic.
 
@@ -143,7 +171,7 @@ At 8 servers, this architecture matched the base architecture throughput of 138k
 
 
 
-__Round 3__
+__Round 3: add network batching__
 
 The results up to this point seem to  indicate some limiting resource.  The problem itself is "embarrasingly parallel" and the architecure is set up to exploit it.  The author was very confident that there were no fundamental architectural flaws.  The only other shared resources seem to be the transaction generator itself and the network.  The possibility of the single threaded transactions server becoming a limiting factor was mitigated (even in round 2) by running multiple.  
 
@@ -189,25 +217,42 @@ _Throughput went all the way to 193k TPS on 8 servers, adding 4 more servers gai
 
 
 
-__Going Further__
+__Round 4: add 90 day history limit and improved history data structure __
 
-A very interesting thing was observed for the 20 node test using this architecture.  Below are the throughput , CPU and memory graphs for that test.
+The following changes were made for this round:
 
-![funny thing 1](images/pipeline_netbatch_20/throughput.png)
+- The EC2 instance type was changed to r5.2x large allowing double the amount of data to be processed for a given number of cores.  
+- The code was changed to implemet a strict 90 day history limit. 
+- As part of the above effort the LinkedList containing transaction history was replaced with a custom data structure that was better for the task. The [TransactionHistoryContainer](hazelcast-certification/src/main/java/com/hazelcast/certification/util/TransactionHistoryContainer.java) is based on a singly linked list, which makes it more compact and more efficient for this application.
+- A scheduled job was added to periodically purge day older than 90 days.
+- Some JVM tuning was applied.
+- IdentifiedDataSerializable was implemented for the transaction history data structures.
 
-![funny 2](images/pipeline_netbatch_20/cpu.png)
+At over 400k TPS the stored data set grows at a rate of approximately 4.6G each minute. In order to take into account the impact of garbage collection, especially old gen garbage collection, the test was run for longer.  
+
+Also, the purge job, which must process every historical transaction (so 600 million +) was schedule to run every 5 minutes so its impact could be assessed. In a real life scenario the purge job would probably be run once a day. 
+
+Note: the solution does not rely on the purge job for correctness.  The 90 day view is enforced by the TransactionHistoryContainer.  The purge just manages data growth. Regular eviction was not an option in this case because each entry contains all history for one credit card.  The entry has to stay in memory but the history has to be truncated.
+
+As can be seen from the images below, despite having 60G heaps, major GCs were not a problem.  Also, the throughput graph shows the impact of the purge job running every 5 minutes.
+
+![throughput](images/pipeline_netbatch_90day_6/throughput.png)
 
 
 
-![funny 3](images/pipeline_netbatch_20/memory.png)
+![throughput](images/pipeline_netbatch_90day_6/memory.png)
 
 
 
-For comparison, here is the throughput graph from the 16 node test.
+Tests were conducted with 12 and 18 nodes as well.  Throughput was measured at 442k TPS and 663k TPS respectively.
 
-![throughput 16](images/pipeline_netbatch_16/throughput.png)
+The observations are plotted on a graph below. As can be seen, the scaling is very close to linear for this solution.
 
-It can be seen that the "waves" have a 150 second period , that all servers are affected at the same time, and that the waves do not correspond to garbage collection activity.  It is theorized that this is some sort of rate limit enforced by the AWS infrastructure but it has not been investigated any further at this time.
+![90day](images/90day.png)
+
+
+
+
 
 # A Note About Fault Tolerance
 

@@ -3,15 +3,18 @@ package com.hazelcast.certification.domain;
 import com.hazelcast.nio.ObjectDataInput;
 import com.hazelcast.nio.ObjectDataOutput;
 import com.hazelcast.nio.serialization.DataSerializable;
+import com.hazelcast.nio.serialization.DataSerializableFactory;
+import com.hazelcast.nio.serialization.IdentifiedDataSerializable;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Arrays;
 
 /**
  * Object representation of incoming and historical transaction
  *
  */
-public class Transaction implements DataSerializable, Serializable, Comparable<Transaction> {
+public class Transaction implements IdentifiedDataSerializable, Comparable<Transaction> {
 
 	private long timeStamp;
 	private int txnAmount;
@@ -145,4 +148,38 @@ public class Transaction implements DataSerializable, Serializable, Comparable<T
 
 		return Long.compare(this.timeStamp, o.timeStamp);
 	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+
+		Transaction that = (Transaction) o;
+
+		if (timeStamp != that.timeStamp) return false;
+		if (txnAmount != that.txnAmount) return false;
+		if (!Arrays.equals(stringFields, that.stringFields)) return false;
+		return fraudCheck != null ? fraudCheck.equals(that.fraudCheck) : that.fraudCheck == null;
+	}
+
+	@Override
+	public int hashCode() {
+		int result = (int) (timeStamp ^ (timeStamp >>> 32));
+		result = 31 * result + txnAmount;
+		result = 31 * result + Arrays.hashCode(stringFields);
+		result = 31 * result + (fraudCheck != null ? fraudCheck.hashCode() : 0);
+		return result;
+	}
+
+	@Override
+	public int getFactoryId() {
+		return TransactionDataSerializableFactory.FACTORY_ID;
+	}
+
+	@Override
+	public int getId() {
+		return TransactionDataSerializableFactory.TRANSACTION_TYPE;
+	}
+
+
 }

@@ -1,6 +1,7 @@
 package com.hazelcast.certification.util;
 
 import com.hazelcast.certification.domain.Transaction;
+import com.hazelcast.certification.domain.TransactionHistoryContainer;
 import org.joda.time.DateTime;
 
 import java.util.ArrayList;
@@ -72,8 +73,8 @@ public class TransactionsUtil {
 	 *            number of historical transactions to create
 	 * @return List of transactions for a credit card
 	 */
-	public LinkedList<Transaction> createAndGetCreditCardTransactions(String creditCardNumber, int txnCount) {
-		LinkedList<Transaction> transactions = new LinkedList<Transaction>();
+	public TransactionHistoryContainer createAndGetCreditCardTransactions(String creditCardNumber, int txnCount) {
+		TransactionHistoryContainer transactions = new TransactionHistoryContainer();
 		for (int j = 0; j < txnCount; j++) {
 
 			Transaction txn = new Transaction();

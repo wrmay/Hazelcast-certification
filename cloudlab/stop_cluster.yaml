@@ -1,0 +1,6 @@
+---
+  - hosts: ClusterMember
+    remote_user: ec2-user
+    tasks:
+      - name: stop cluster member
+        shell: supervisorctl  -c /home/ec2-user/hazelcast-certification/supervisord.conf stop hzmember

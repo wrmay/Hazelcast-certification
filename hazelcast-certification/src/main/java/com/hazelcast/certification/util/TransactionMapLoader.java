@@ -1,13 +1,14 @@
 package com.hazelcast.certification.util;
 
 import com.hazelcast.certification.domain.Transaction;
+import com.hazelcast.certification.domain.TransactionHistoryContainer;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.MapLoader;
 import com.hazelcast.core.MapLoaderLifecycleSupport;
 
 import java.util.*;
 
-public class TransactionMapLoader implements MapLoader<String, LinkedList<Transaction>>, MapLoaderLifecycleSupport {
+public class TransactionMapLoader implements MapLoader<String, TransactionHistoryContainer>, MapLoaderLifecycleSupport {
 
     private static final String PRELOAD_CARD_COUNT_PROPERTY = "preload.cardCount";
     private static final String PRELOAD_TXN_COUNT_PER_CARD = "preload.txnCount";
@@ -20,17 +21,13 @@ public class TransactionMapLoader implements MapLoader<String, LinkedList<Transa
     private TransactionsUtil txnGenerator;
 
 
-    public LinkedList<Transaction> load(String ccNumber) {
-        LinkedList<Transaction> result;
-        synchronized (txnGenerator) {
-            result = txnGenerator.createAndGetCreditCardTransactions(ccNumber, historicalTransactionCount);
-        }
-        Collections.sort(result);
+    public TransactionHistoryContainer load(String ccNumber) {
+        TransactionHistoryContainer result = txnGenerator.createAndGetCreditCardTransactions(ccNumber, historicalTransactionCount);
         return result;
     }
 
-    public Map<String, LinkedList<Transaction>> loadAll(Collection<String> keys) {
-        HashMap<String, LinkedList<Transaction>> result = new HashMap<>(keys.size());
+    public Map<String, TransactionHistoryContainer> loadAll(Collection<String> keys) {
+        HashMap<String, TransactionHistoryContainer> result = new HashMap<>(keys.size());
         for (String cc : keys) result.put(cc, load(cc));
         return result;
     }

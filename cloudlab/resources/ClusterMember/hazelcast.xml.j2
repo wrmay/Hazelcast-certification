@@ -15,6 +15,12 @@
         </join>
     </network>
 
+    <serialization>
+      <data-serializable-factories>
+        <data-serializable-factory factory-id="1">com.hazelcast.certification.domain.TransactionDataSerializableFactory</data-serializable-factory>
+      </data-serializable-factories>
+    </serialization>
+
     <map name="transaction_history">
         <in-memory-format>OBJECT</in-memory-format>
         <map-store enabled="true" initial-mode="EAGER">
@@ -29,12 +35,16 @@
 
 
     <properties>
-  {% if (private_ip[-3:]|int) % 3 == 0 %}
+  {% if (private_ip[-3:]|int) % 5 == 0 %}
         <property name="transaction.server.host">10.0.0.201</property>
-  {% elif (private_ip[-3:]|int) % 3 == 1 %}
+  {% elif (private_ip[-3:]|int) % 5 == 1 %}
         <property name="transaction.server.host">10.0.0.202</property>
-  {% else %}
+  {% elif (private_ip[-3:]|int) % 5 == 2 %}
         <property name="transaction.server.host">10.0.0.203</property>
+  {% elif (private_ip[-3:]|int) % 5 == 3 %}
+        <property name="transaction.server.host">10.0.0.204</property>
+  {% else %}
+        <property name="transaction.server.host">10.0.0.205</property>
   {% endif %}
         <property name="transaction.server.port">8511</property>
         <property name="transaction.reader.threads">16</property>

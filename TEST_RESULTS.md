@@ -242,7 +242,7 @@ _Heap_
 
 ![heap](images/netbatch_20/memory.png)
 
-## Base Architecture + EP Pipelining + Network Level Batching - WINNER
+## Base Architecture + EP Pipelining + Network Level Batching 
 
 ### 8 nodes
 
@@ -301,3 +301,62 @@ _Heap_
 ![heap](images/netbatch_20/memory.png)
 
 ## 
+
+## Base Architecture + EP Pipelining + Network Level Batching + Strict 90 day Enforcement
+
+### 6 nodes
+
+_throughput_
+
+![throughput](images/pipeline_netbatch_90day_6/throughput.png)
+
+_CPU_
+
+![throughput](images/pipeline_netbatch_90day_6/cpu.png)
+
+
+
+_Heap_
+
+![throughput](images/pipeline_netbatch_90day_6/memory.png)
+
+
+
+### 12 Nodes
+
+_throughput_
+
+![throughput](images/pipeline_netbatch_90day_12/throughput.png)
+
+
+
+_CPU_
+
+![throughput](images/pipeline_netbatch_90day_12/cpu.png)
+
+
+
+_Heap_
+
+![throughput](images/pipeline_netbatch_90day_12/memory.png)
+
+### 18 Nodes
+
+_throughput_
+
+![throughput](images/pipeline_netbatch_90day_18/throughput.png)
+
+
+
+_CPU_
+
+![throughput](images/pipeline_netbatch_90day_18/cpu.png)
+
+
+
+_Heap_
+
+![throughput](images/pipeline_netbatch_90day_18/memory.png)
+
+
+

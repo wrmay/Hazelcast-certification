@@ -2,14 +2,20 @@ package com.hazelcast.certification.util;
 
 import com.hazelcast.certification.domain.Stats;
 import com.hazelcast.certification.domain.Transaction;
+import com.hazelcast.certification.domain.TransactionHistoryContainer;
 import com.hazelcast.certification.server.LoadTransactionHistoryTask;
+import com.hazelcast.certification.server.TransactionHistoryPurgeEntryProcessor;
 import com.hazelcast.certification.server.TransactionSource;
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.HazelcastInstanceAware;
 import com.hazelcast.core.IExecutorService;
 import com.hazelcast.core.IMap;
+import com.hazelcast.scheduledexecutor.IScheduledExecutorService;
 
+import java.io.Serializable;
 import java.util.LinkedList;
+import java.util.concurrent.TimeUnit;
 
 public class Controller {
     public static void main(String []args){
@@ -53,6 +59,10 @@ public class Controller {
                 System.out.println("transaction processing stopped");
             } else if (command.equals("report") && target.equals("throughput")){
                 reportThroughput(hz);
+            } else if (command.equals("start") && target.equals("purge")) {
+                schedulePurgeJob(hz);
+            } else if (command.equals("stop") && target.equals("purge")) {
+                hz.getScheduledExecutorService("purge scheduler").shutdown();
             } else {
                 System.out.println("Unrecognized command: " + command);
                 returncode = 1;
@@ -66,6 +76,11 @@ public class Controller {
         }
 
         System.exit(returncode);
+    }
+
+    private static void schedulePurgeJob(HazelcastInstance hz){
+        IScheduledExecutorService scheduler = hz.getScheduledExecutorService("purge scheduler");
+        scheduler.scheduleAtFixedRate(new PurgeTask(), 300, 300, TimeUnit.SECONDS);
     }
 
     private static void reportThroughput(HazelcastInstance hz){
@@ -84,7 +99,25 @@ public class Controller {
         System.out.println("\tload");
         System.out.println("\tstart processing");
         System.out.println("\tstop processing");
+        System.out.println("\tstart purge");
+        System.out.println("\tstop purge");
         System.out.println("\treport throughput");
         System.out.println("\thelp");
+    }
+
+    private static class PurgeTask implements Runnable, HazelcastInstanceAware, Serializable {
+
+        private transient HazelcastInstance hz;
+
+        @Override
+        public void setHazelcastInstance(HazelcastInstance hazelcastInstance) {
+            hz = hazelcastInstance;
+        }
+
+        @Override
+        public void run() {
+            IMap<String, TransactionHistoryContainer> map = hz.getMap("transaction_history");
+            map.executeOnEntries(new TransactionHistoryPurgeEntryProcessor());
+        }
     }
 }

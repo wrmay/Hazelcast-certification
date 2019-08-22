@@ -1,6 +1,7 @@
 import com.hazelcast.certification.business.ruleengine.RuleEngine;
 import com.hazelcast.certification.domain.Transaction;
 import com.hazelcast.certification.server.ProcessTransactionEntryProcessor;
+import com.hazelcast.certification.domain.TransactionHistoryContainer;
 import com.hazelcast.certification.util.TransactionsUtil;
 
 import java.util.LinkedList;
@@ -12,12 +13,12 @@ public class ProcessingTimeTest {
         int HISTORICAL_TRANSACTIONS = 20;
         int TRANSACTIONS_TO_PROCESS = 10000;
 
-        LinkedList<Transaction> historicalTransactions = new LinkedList<Transaction>();
+        TransactionHistoryContainer historicalTransactions = new TransactionHistoryContainer(90);
         LinkedList<Transaction> transactionsToProcess = new LinkedList<Transaction>();
 
 
         for (int i = 0; i < HISTORICAL_TRANSACTIONS; ++i) {
-            historicalTransactions.addLast(generateTransaction());
+            historicalTransactions.add(generateTransaction());
         }
 
         for(int i=0;i< TRANSACTIONS_TO_PROCESS; ++i){
@@ -28,10 +29,9 @@ public class ProcessingTimeTest {
 
         long start = System.currentTimeMillis();
         for (Transaction t : transactionsToProcess) {
+            historicalTransactions.add(t);
             RuleEngine re = new RuleEngine(t, historicalTransactions);
             re.executeRules();
-            historicalTransactions.removeFirst();
-            historicalTransactions.addLast(t);
         }
 
         long elapsed = System.currentTimeMillis() - start;

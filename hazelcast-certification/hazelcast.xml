@@ -14,6 +14,11 @@
         </join>
     </network>
 
+    <serialization>
+        <data-serializable-factories>
+            <data-serializable-factory factory-id="1">com.hazelcast.certification.domain.TransactionDataSerializableFactory</data-serializable-factory>
+        </data-serializable-factories>
+    </serialization>
 
     <map name="transaction_history">
         <in-memory-format>OBJECT</in-memory-format>
@@ -21,7 +26,7 @@
             <class-name>com.hazelcast.certification.util.TransactionMapLoader</class-name>
             <properties>
                 <property name="preload.cardCount">100000</property>
-                <property name="preload.txnCount">40</property>
+                <property name="preload.txnCount">20</property>
             </properties>
         </map-store>
     </map>

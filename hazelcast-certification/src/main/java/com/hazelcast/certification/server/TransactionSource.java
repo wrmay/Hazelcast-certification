@@ -49,7 +49,7 @@ public class TransactionSource extends Thread {
         controller = hz.getMap("controller");
         controller.set(TRANSACTION_SOURCE_ON_PARAMETER, Boolean.FALSE);
         this.hz = hz;
-        this.inFlightTransactions = new LinkedBlockingQueue<>(1000);
+        this.inFlightTransactions = new LinkedBlockingQueue<>(200);
         this.setDaemon(true);
     }
 
