@@ -3,7 +3,7 @@
            xsi:schemaLocation="http://www.hazelcast.com/schema/config
            http://www.hazelcast.com/schema/config/hazelcast-config-3.12.xsd">
 
-    <license-key>ENTERPRISE_HD#30Nodes#ni21yjqkNJgulZPMSDHXTKQm9O0f5Y8bABECdUGWw661100000107100010211111000221001900900090130</license-key>
+    <license-key>YOUR LICENSE HERE</license-key>
 
     <network>
         <join>
