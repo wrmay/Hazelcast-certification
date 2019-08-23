@@ -308,11 +308,23 @@ However,  if a server is lost, transactions that have been read from the source 
 
 _This is unavoidable with the problem as posed._  The cluster members must pull the transactions from the transaction source and even saving the transactions into a replicated data structure before processing would not solve the problem.  This is because the transaction generator uses a simple socket write to send the data and does not wait for any sort of application level ack. The fact that a socket write succeeds in the transaction generator does not mean that the consumer has processed, or even seen the transaction.  This is a somewhat misunderstood characteristic of TCP. See for example: https://www.stratus.com/openvos-blog/it-myths-tcp-guarantees-delivery-of-your-data/.
 
-The two ways to handle this would be to change submission mechanism to a more conventional request/response style with application level acks or to make the source to be "replayable".  This is of course exactly the approach implemented by Kafka and other Enterprise event streaming solutions.  Also, it is worth noting that source replayability is a requirement for reliable event processing in Jet. 
+The two ways to handle this would be to change the submission mechanism to introduce application level acks or to make the source  "replayable".  Replayability is the approach implemented by Kafka and other Enterprise event streaming solutions.  Also, it is worth noting that source replayability is a requirement for reliable event processing in Jet. 
 
-Of course the hazelcast client and server already do this so a good way to implement end to end reliability is to replace the transaction generator, which writes to a socket, with a Hazelcast client, which already has fault tolerant communication with the cluster.
+Of course the hazelcast client and server communication is reliable and incorporates application level acks so the whole end to interaction can be made reliable by replacing the "raw socket" communication with Hazelcast client-server communication.
 
-On the "RR" (for request/response) branch of this repository is a sample implementation.  Instead of writing to a socket, the "FraudDetectionClient" is  a HazelcastClient which interacts with the cluster directly via the Hazelcast APIs.  In order to achieve higher throughput, FraudDetectionClient is implemented with pipelining and back pressure that will throttle back the request rate when there are too many requests in flight.   The client was instrumented with counters for : submitted requests, failed request, successful requests and slow requests. Slow requests are requests that take over 1 second to satisfy.  The results are below.
+
+
+On the "RR" (for request/response) branch of this repository is a sample implementation.  Instead of writing to a socket, the "FraudDetectionClient" class wraps a HazelcastClient which interacts with the cluster  via the Hazelcast APIs.  In order to achieve higher throughput, the FraudDetectionClient was implemented with pipelining and back pressure to throttle back the request rate when there are too many requests in flight.   The client was instrumented with counters for submitted requests, failed request, successful requests and slow requests. Slow requests are requests that take over 1 second to satisfy.  The results are below.
+
+Throughput was in the 150K- 200K TPS range. 
+
+![throughput](images/pipeline_netbatch_90day_RR_6/throughput.png)
+
+
+
+There were comparatively few slow transactions. Typically less than .03 percent (NOT 3 percent) of the transactions took over 1 second.  None timed out.
+
+![throughput](images/pipeline_netbatch_90day_RR_6/slow_transaction_rate.png)
 
 
 
