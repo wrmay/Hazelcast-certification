@@ -4,3 +4,5 @@
     tasks:
       - name: stop cluster member
         shell: supervisorctl  -c /home/ec2-user/hazelcast-certification/supervisord.conf stop hzmember
+      - name: stop supervisor
+        shell: supervisorctl  -c /home/ec2-user/hazelcast-certification/supervisord.conf shutdown

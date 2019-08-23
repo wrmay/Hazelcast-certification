@@ -2,12 +2,12 @@
   region: us-east-2
   servers:
     - instance_type: m5.2xlarge
-      private_ip_addresses: [201,202,203,204,205]
+      private_ip_addresses: [201,202]
       roles:
         - TxnGenerator
 
     - instance_type: r5.2xlarge
-      private_ip_addresses: [101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118]
+      private_ip_addresses: [101,102,103,104,105,106]
       roles:
         - ClusterMember
 

@@ -222,7 +222,7 @@ __Round 4: add 90 day history limit and improved history data structure __
 The following changes were made for this round:
 
 - The EC2 instance type was changed to r5.2x large allowing double the amount of data to be processed for a given number of cores.  
-- The code was changed to implemet a strict 90 day history limit. 
+- The code was changed to implement a strict 90 day history limit. 
 - As part of the above effort the LinkedList containing transaction history was replaced with a custom data structure that was better for the task. The [TransactionHistoryContainer](hazelcast-certification/src/main/java/com/hazelcast/certification/util/TransactionHistoryContainer.java) is based on a singly linked list, which makes it more compact and more efficient for this application.
 - A scheduled job was added to periodically purge day older than 90 days.
 - Some JVM tuning was applied.
@@ -230,7 +230,7 @@ The following changes were made for this round:
 
 At over 400k TPS the stored data set grows at a rate of approximately 4.6G each minute. In order to take into account the impact of garbage collection, especially old gen garbage collection, the test was run for longer.  
 
-Also, the purge job, which must process every historical transaction (so 600 million +) was schedule to run every 5 minutes so its impact could be assessed. In a real life scenario the purge job would probably be run once a day. 
+Also, the purge job, which must process every historical transaction (so 600 million +) was schedule to run every 5 minutes so its impact could be assessed. In a real life scenario the purge job would probably be run once a day. Also, the current purge job is too violent.  In a real system it would make sense to process a few keys at a time instead of all at once.
 
 Note: the solution does not rely on the purge job for correctness.  The 90 day view is enforced by the TransactionHistoryContainer.  The purge just manages data growth. Regular eviction was not an option in this case because each entry contains all history for one credit card.  The entry has to stay in memory but the history has to be truncated.
 
@@ -252,13 +252,32 @@ The observations are plotted on a graph below. As can be seen, the scaling is ve
 
 
 
+__Round 5: add HD__
+
+HD was added to the previous solution and throughput was even higher. 
+
+
+
+
+
+
+
 
 
 # A Note About Fault Tolerance
 
-The solution stores all of the transaction history in a redundant map but if a server is lost, transactions that have been read from the source and not yet scored will be lost.  With the base line architecture, each reader thread can have 1 transaction in flight.  With the later architectures, many more transactions can be in flight.  
+All of the transaction history is backed up because the Hazelcast map replicates data to a backup by default.  This means that transaction processing will continue, and all history will continue to be available, even if there is a failure.
 
-This is unavoidable with the problem as posed.  The cluster members must pull the transactions from the transaction source and even saving the transactions into a replicated data structure before processing would not solve the problem.  With a "push", if the recipient fails to receive for any reason, it becomes the responsibility of the "pusher" to retry.  With the pull architecture, if the "puller" fails there is no one to retry and the pulled event is lost.
+However,  if a server is lost, transactions that have been read from the source and not yet processed will be lost.  With the base line architecture, each reader thread can have 1 transaction in flight.  With the later architectures, many more transactions can be in flight.  
 
-The best way to handle this in a real system if for the source to be "replayable".  This is of course exactly the approach implemented by Kafka and other Enterprise event streaming solutions.  Also, it is worth noting that source replayability is a requirement for reliable event processing in Jet. 
+_This is unavoidable with the problem as posed._  The cluster members must pull the transactions from the transaction source and even saving the transactions into a replicated data structure before processing would not solve the problem.  This is because the transaction generator uses a simple socket write to send the data and does not wait for any sort of application level ack. The fact that a socket write succeeds in the transaction generator does not mean that the consumer has processed, or even seen the transaction.  This is a somewhat misunderstood characteristic of TCP. See for example: https://www.stratus.com/openvos-blog/it-myths-tcp-guarantees-delivery-of-your-data/.
 
+The two ways to handle this would be to change submission mechanism to a more conventional request/response style with application level acks or to make the source to be "replayable".  This is of course exactly the approach implemented by Kafka and other Enterprise event streaming solutions.  Also, it is worth noting that source replayability is a requirement for reliable event processing in Jet. 
+
+
+
+# Further Investigation
+
+- Is pipelining less beneficial when using HD ?
+- Why did the HD solution show the sudden leap in performance after the first purge job ? 
+- How can it be made reliable end to end ?
