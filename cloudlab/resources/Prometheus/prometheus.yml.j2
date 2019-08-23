@@ -14,6 +14,7 @@ scrape_configs:
       - targets:
 {% for host in groups['TxnGenerator'] %}
         - {{ hostvars[host].private_ip }}:8888
+        - {{ hostvars[host].private_ip }}:7777
 {% endfor %}
 
   - job_name: 'ClusterMember'

@@ -1,0 +1,57 @@
+---
+  - hosts: 127.0.0.1
+    connection: local
+    tasks:
+      - name: clean the maven project
+        shell: mvn clean
+        args:
+          chdir: ../hazelcast-certification
+          
+      - name: render hazelcast-client.xml
+        template:
+          src: local-hazelcast-client.xml.j2
+          dest: "{{ envname }}/hazelcast-client.xml"
+          lstrip_blocks: yes
+          trim_blocks: yes
+
+  - hosts: [ TxnGenerator]
+    remote_user: ec2-user
+    tasks:
+      - name: copy project files to servers
+        become: no
+        copy:
+          src: "../hazelcast-certification"
+          dest: "/home/ec2-user/"
+
+      - name: build the project
+        become: no
+        shell: mvn package -DskipTests
+        args:
+          chdir: /home/ec2-user/hazelcast-certification
+
+      - name: copy config files and scripts into place
+        become: no
+        copy:
+          src: resources/TxnGenerator/
+          dest: /home/ec2-user/hazelcast-certification
+
+      - name: start supervisord (fail if already running)
+        shell: supervisord -c /home/ec2-user/hazelcast-certification/supervisord.conf
+        args:
+          chdir: /home/ec2-user
+        ignore_errors: yes
+
+      # this is done so that, on repeated runs, new config will be picked up
+      - name: reload transaction generator
+        shell: supervisorctl  -c /home/ec2-user/hazelcast-certification/supervisord.conf update txngenerator
+
+      - name: start transaction generator
+        shell: supervisorctl  -c /home/ec2-user/hazelcast-certification/supervisord.conf start txngenerator
+
+  - hosts: 127.0.0.1
+    connection: local
+    tasks:
+      - name: package the maven project
+        shell: mvn package
+        args:
+          chdir: ../hazelcast-certification

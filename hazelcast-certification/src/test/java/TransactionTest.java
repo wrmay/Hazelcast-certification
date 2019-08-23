@@ -71,7 +71,7 @@ public class TransactionTest {
 
         String rawTxnString = txn.toString();
 
-        // from TransactionSource.process
+        // from FraudDetectionClient.process
         int z = rawTxnString.indexOf(0);
         Assertions.assertTrue(z > 0);
         String txnString = rawTxnString.substring(0, z);

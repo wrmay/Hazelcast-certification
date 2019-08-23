@@ -67,7 +67,7 @@ public class ProcessingTimeTest {
 
         String rawTxnString = txn.toString();
 
-        // from TransactionSource.process
+        // from FraudDetectionClient.process
         int z = rawTxnString.indexOf(0);
         String txnString = rawTxnString.substring(0, z);
 
