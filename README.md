@@ -2,7 +2,9 @@
 
 This document describes the primary findings.  Many tests were run on AWS infrastructure.  To faciliate rapid test cycles, reusable machinery was developed.  It should be possible for anyone to quickly duplicate these results using the same machinery.  For instructions on that, see [USAGE.md](USAGE.md).
 
-The raw details of each test run can be found in [TEST_RESULTS.md](TEST_RESULTS.md).
+The raw details of each test run can be found in [TEST_RESULTS_ROUND_1_3.md](TEST_RESULTS_ROUND_1_3.md) and [TEST_RESULTS_ROUND_4_N.md](TEST_RESULTS_ROUND_4_N.md)
+
+
 
 Various related side inquiries were documented [here](INVESTIGATIONS.md) and [here](https://github.com/wrmay/threads-and-events).
 
@@ -75,24 +77,24 @@ __JVM Settings__:
 
 - (round 4) -Xms60g -Xmx60g -Xmn6g -XX:+UseConcMarkSweepGC -XX:+CMSParallelRemarkEnabled -XX:+UseCMSInitiatingOccupancyOnly -XX:CMSInitiatingOccupancyFraction=70 -XX:+ScavengeBeforeFullGC -XX:+CMSScavengeBeforeRemark
 
+- (round 5) -Xmx8g -Xms8g -Xmn4g
+
   
 
 # Results 
 
 The table below shows the results of testing several alternatives at different scales.  The units are all thousands of transactions per second.  Detailed results, throughput, CPU and heap utiulization for each  run can be found in [a separate document](TEST_RESULTS.md).	
 
-| Nodes | Base Architecture | 1a   | 1b   | 2    | X    | 3    | 4    |
-| ----- | ----------------- | ---- | ---- | ---- | ---- | ---- | ---- |
-| 6     |                   |      |      |      |      |      | 232  |
-| 8     | 102               |      |      | 138  | 97   | 193  |      |
-| 10    | 113               |      |      |      |      |      |      |
-| 12    | 124               |      |      | 156  | 115  | 267  | 442  |
-| 14    | 116               |      |      |      |      |      |      |
-| 16    | 138               | 140  | 153  | 166  | 141  | 323  |      |
-| 18    |                   |      |      |      |      |      | 663  |
-| 20    |                   |      |      | 170  | 161  |      |      |
-
-
+| Nodes | 1    | 1a   | 1b   | 2    | X    | 3    | 4       | 5    |
+| ----- | ---- | ---- | ---- | ---- | ---- | ---- | ------- | ---- |
+| 6     |      |      |      |      |      |      | 183     | 136  |
+| 8     | 102  |      |      | 138  | 97   | 193  |         |      |
+| 10    | 113  |      |      |      |      |      |         |      |
+| 12    | 124  |      |      | 156  | 115  | 267  | 450     | 227  |
+| 14    | 116  |      |      |      |      |      |         |      |
+| 16    | 138  | 140  | 153  | 166  | 141  | 323  |         |      |
+| 18    |      |      |      |      |      |      | **670** | 286  |
+| 20    |      |      |      | 170  | 161  |      |         |      |
 
 Round 1: Entry processor based solution with OBJECT serialization
 
@@ -107,6 +109,8 @@ Round X: Round 1 + Network Batching
 Round 3: Round 2 + Network Batching
 
 Round 4: Round 3 + 90 day enforcement and custom container for transaction history
+
+Round 5: Round 4 + HD
 
 
 
@@ -221,44 +225,68 @@ __Round 4: add 90 day history limit and improved history data structure __
 
 The following changes were made for this round:
 
-- The EC2 instance type was changed to r5.2x large allowing double the amount of data to be processed for a given number of cores.  
+- The EC2 instance type was changed to r5.2x large allowing double the amount of data to be processed for a given number of cores.  Note the number of cores did not change.
 - The code was changed to implement a strict 90 day history limit. 
-- As part of the above effort the LinkedList containing transaction history was replaced with a custom data structure that was better for the task. The [TransactionHistoryContainer](hazelcast-certification/src/main/java/com/hazelcast/certification/util/TransactionHistoryContainer.java) is based on a singly linked list, which makes it more compact and more efficient for this application.
-- A scheduled job was added to periodically purge day older than 90 days.
-- Some JVM tuning was applied.
+- As part of the above effort the LinkedList containing transaction history was replaced with a custom data structure that was better for the task. The [TransactionHistoryContainer](hazelcast-certification/src/main/java/com/hazelcast/certification/util/TransactionHistoryContainer.java) is based on a singly linked list, which makes it more compact and more efficient for this application. [Tests](hazelcast-certification/src/test/java/com/TransactionHistoryContainerTest.java) to ensure correctness were run.
 - IdentifiedDataSerializable was implemented for the transaction history data structures.
+- Some [ JVM tuning](#Infrastructure) was applied.
 
-At over 400k TPS the stored data set grows at a rate of approximately 4.6G each minute. In order to take into account the impact of garbage collection, especially old gen garbage collection, the test was run for longer.  
+Note that regular eviction was not an option in this case because each entry contains all history for one credit card.  The entry has to stay in memory but the history has to be truncated.  The TransactionHistoryContainer prunes the history whenever it is traversed (i.e. continuously).
 
-Also, the purge job, which must process every historical transaction (so 600 million +) was schedule to run every 5 minutes so its impact could be assessed. In a real life scenario the purge job would probably be run once a day. Also, the current purge job is too violent.  In a real system it would make sense to process a few keys at a time instead of all at once.
+Tests were conducted with 6, 12 and 18 nodes. The new, more efficient history data structure resulted in an increase in performance despite the addition of "90 day logic". 
 
-Note: the solution does not rely on the purge job for correctness.  The 90 day view is enforced by the TransactionHistoryContainer.  The purge just manages data growth. Regular eviction was not an option in this case because each entry contains all history for one credit card.  The entry has to stay in memory but the history has to be truncated.
+The observations are plotted on a graph below.  For 6 server,  183kTPS / 6 servers = 30.5 kTPS / server.  For 12 servers, 450 kTPS / 12 servers = 37.5 kTPS / server. For 18 servers, 670k TPS / 18 = 37.2k TPS / server.  In other words, the 12 and 18 server tests showed very close to linear scaling.  In the 6 server test, each server did not deliver as many TPS per server.  This was probably due to some GC pressure.
 
-As can be seen from the images below, despite having 60G heaps, major GCs were not a problem.  Also, the throughput graph shows the impact of the purge job running every 5 minutes.
-
-![throughput](images/pipeline_netbatch_90day_6/throughput.png)
-
-
-
-![throughput](images/pipeline_netbatch_90day_6/memory.png)
+![90day](images/round4_scaling.png)
 
 
 
-Tests were conducted with 12 and 18 nodes as well.  Throughput was measured at 442k TPS and 663k TPS respectively.
-
-The observations are plotted on a graph below. As can be seen, the scaling is very close to linear for this solution.
-
-![90day](images/90day.png)
+For detailed results, see [TEST_RESULTS_ROUND_4_N.md](TEST_RESULTS_ROUND_4_N.md). This series of experiments is under the heading "Base Architecture + EP Pipelining + Network Level Batching + Strict 90 day Enforcement (a with clean as you go)"
 
 
 
 __Round 5: add HD__
 
-HD was added to the previous solution and throughput was even higher. 
+HD was added to the previous solution. After some experimentation to see what was the most stable, 52G were allocated to native memory with default settings and 8G was allocated to the JVM.
+
+```xml
+    <native-memory allocator-type="POOLED" enabled="true">
+      <size unit="GIGABYTES" value="52"/>
+      <min-block-size>16</min-block-size>
+      <page-size>4194304</page-size>
+      <metadata-space-percentage>12.5</metadata-space-percentage>
+    </native-memory>
+
+    <serialization>
+      <data-serializable-factories>
+        <data-serializable-factory factory-id="1">com.hazelcast.certification.domain.TransactionDataSerializableFactory</data-serializable-factory>
+      </data-serializable-factories>
+    </serialization>
+
+    <map name="transaction_history">
+        <in-memory-format>NATIVE</in-memory-format>
+        <map-store enabled="true" initial-mode="EAGER">
+            <class-name>com.hazelcast.certification.util.TransactionMapLoader</class-name>
+            <properties>
+                <property name="preload.cardCount">30000000</property>
+                <property name="preload.txnCount">20</property>
+            </properties>
+        </map-store>
+        <statistics-enabled>true</statistics-enabled>
+    </map>
+```
 
 
 
+The JVM GC settings were `-Xmx8g -Xms8g -Xmn4g` .  This showed the best stability.  The large young gen is configured because the JVM no longer needs to deal with much longer lived data.  The vast majority of the allocations in the JVM will be very short lived so making a larger young gen avoids tenuring of short lived objects and the Old Gen GC that comes with it.  
 
+The throughput results are charted below.
+
+![hd_scaling](images/hd_scaling.png)
+
+
+
+For detailed results, see [TEST_RESULTS_ROUND_4_N.md](TEST_RESULTS_ROUND_4_N.md). This series of experiments is under the heading "Base Architecture + EP Pipelining + Network Level Batching + Strict 90 day Enforcement (a with clean as you go) + HD"
 
 
 
@@ -275,9 +303,3 @@ _This is unavoidable with the problem as posed._  The cluster members must pull 
 The two ways to handle this would be to change submission mechanism to a more conventional request/response style with application level acks or to make the source to be "replayable".  This is of course exactly the approach implemented by Kafka and other Enterprise event streaming solutions.  Also, it is worth noting that source replayability is a requirement for reliable event processing in Jet. 
 
 
-
-# Further Investigation
-
-- Is pipelining less beneficial when using HD ?
-- Why did the HD solution show the sudden leap in performance after the first purge job ? 
-- How can it be made reliable end to end ?
