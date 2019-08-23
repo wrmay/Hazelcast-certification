@@ -1,0 +1,7 @@
+---
+  - hosts: Prometheus
+    remote_user: ec2-user
+    tasks:
+      - name: stop Prometheus
+        become: no
+        shell: supervisorctl start prometheus

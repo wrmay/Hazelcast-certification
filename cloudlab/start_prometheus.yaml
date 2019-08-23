@@ -1,0 +1,31 @@
+---
+  - hosts: Prometheus
+    remote_user: ec2-user
+    tasks:
+      - name: copy the supervisord config file to the server
+        become: no
+        copy:
+          src: resources/Prometheus/supervisord.conf
+          dest: /home/ec2-user/supervisord.conf
+
+      - name: generate the prometheus config
+        become: no
+        template:
+          src: resources/Prometheus/prometheus.yml.j2
+          dest: /home/ec2-user/prometheus.yml
+          lstrip_blocks: yes
+          trim_blocks: yes
+
+      - name: start supervisord (fail if already running)
+        shell: supervisord -c /home/ec2-user/supervisord.conf
+        args:
+          chdir: /home/ec2-user
+        ignore_errors: yes
+
+      - name: reload Prometheus
+        become: no
+        shell: supervisorctl update prometheus
+
+      - name: start Prometheus
+        become: no
+        shell: supervisorctl start prometheus
