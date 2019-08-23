@@ -134,8 +134,7 @@ public class TransactionHistoryContainerTest {
 
         Assertions.assertFalse(it.hasNext());
 
-        Assertions.assertEquals(3, container.size());
-        container.purge();
+        // the old transaction should have been removed by iterating
         Assertions.assertEquals(2,container.size());
     }
 

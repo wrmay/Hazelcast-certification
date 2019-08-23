@@ -1,16 +1,13 @@
 package com.hazelcast.certification.domain;
 
-import com.hazelcast.certification.domain.Transaction;
 import com.hazelcast.nio.ObjectDataInput;
 import com.hazelcast.nio.ObjectDataOutput;
-import com.hazelcast.nio.serialization.DataSerializable;
-import com.hazelcast.nio.serialization.DataSerializableFactory;
 import com.hazelcast.nio.serialization.IdentifiedDataSerializable;
 import org.joda.time.DateTime;
 
 import java.io.IOException;
-import java.nio.channels.NoConnectionPendingException;
-import java.util.*;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * The container  provides an iterator that limits the scope to only Transactions newer than X days.
@@ -66,6 +63,7 @@ public class TransactionHistoryContainer implements Iterable<Transaction>, Ident
         this.size += 1;
     }
 
+    // no needed any more - normal iteration will truncate the list when needed
     public int purge(){
         long dateCutoff = DateTime.now().minusDays(daysToKeep).getMillis();
 
@@ -190,9 +188,38 @@ public class TransactionHistoryContainer implements Iterable<Transaction>, Ident
 
         @Override
         public boolean hasNext() {  // remember - next means earlier in this case
-            if (currentNode == null) return lastTransaction != null && lastTransaction.transaction.getTimeStamp() > dateCutoff;
+            if (currentNode == null) {
+                if (lastTransaction == null) return false; // RETURN
 
-            return currentNode.previous != null  && currentNode.previous.transaction.getTimeStamp() > dateCutoff;
+                if (lastTransaction.transaction.getTimeStamp() <= dateCutoff){
+                    // truncate
+                    lastTransaction = null;
+                    size = 0;
+                    return false; // RETURN
+                } else {
+                    return true;  // RETURN
+                }
+            }
+
+            if (currentNode.previous == null) return false;  //RETURN
+
+            if (currentNode.previous.transaction.getTimeStamp() <= dateCutoff){
+                // count how many are being truncated and return the size
+                TransactionHistoryNode node = currentNode.previous;
+                int count = 1;
+                while(node.previous != null){
+                    ++count;
+                    node = node.previous;
+                }
+                size -= count;
+
+                // truncate
+                currentNode.previous = null;
+
+                return false;
+            } else {
+                return true;
+            }
         }
 
         @Override

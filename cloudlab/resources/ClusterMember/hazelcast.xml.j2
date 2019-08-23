@@ -15,13 +15,14 @@
         </join>
     </network>
 
+<!--
     <native-memory allocator-type="POOLED" enabled="true">
       <size unit="GIGABYTES" value="36"/>
       <min-block-size>16</min-block-size>
       <page-size>4194304</page-size>
       <metadata-space-percentage>12.5</metadata-space-percentage>
     </native-memory>
-
+-->
     <serialization>
       <data-serializable-factories>
         <data-serializable-factory factory-id="1">com.hazelcast.certification.domain.TransactionDataSerializableFactory</data-serializable-factory>
@@ -29,7 +30,7 @@
     </serialization>
 
     <map name="transaction_history">
-        <in-memory-format>NATIVE</in-memory-format>
+        <in-memory-format>OBJECT</in-memory-format>
         <map-store enabled="true" initial-mode="EAGER">
             <class-name>com.hazelcast.certification.util.TransactionMapLoader</class-name>
             <properties>
