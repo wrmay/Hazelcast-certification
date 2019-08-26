@@ -18,7 +18,7 @@
         - ManCenter
 
   open_ports:
-    TxnGenerator: [8511, 8888]
+    TxnGenerator: [8511, 8888,7777]
     ClusterMember: [8888, 7777, 5701]
     Prometheus: [9090, 3000]
     ManCenter: [8080]
