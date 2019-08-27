@@ -288,7 +288,7 @@ The throughput results are charted below.
 
 For detailed results, see [TEST_RESULTS_ROUND_4_N.md](TEST_RESULTS_ROUND_4_N.md). This series of experiments is under the heading "Base Architecture + EP Pipelining + Network Level Batching + Strict 90 day Enforcement (a with clean as you go) + HD"
 
-Unfortunately, a long term downward trend in throughput was observed even though off-heap usage remained under 70% on all machines.  Fragmentation is my only suspect at present.  I will be pursuing this.
+Unfortunately, a long term downward trend in throughput was observed even though off-heap usage remained under 70% on all machines.  
 
 ![hd throughput](images/pipeline_netbatch_90day_HD_18a_Extended/throughput.png)
 
@@ -297,6 +297,12 @@ Unfortunately, a long term downward trend in throughput was observed even though
 ![mancenter](images/pipeline_netbatch_90day_HD_18a_Extended/mancenter.png)
 
 
+
+One possible explanation is that this is simply the result of having to serialize more and more transactions.  In order to test this theory, the code was modified so that the length of transaction history remained constant over time. This code is designated with the "hd-slowdown-test-1" tag.   The test showed constant throughput.
+
+![hd throughput](images/pipeline_netbatch_90day_HD_18a_Extended/throughput_fixedsize.png)
+
+This supports the conclusion that, in the HD based implemenation of this lab, serialization time is a very significant factor.
 
 
 
