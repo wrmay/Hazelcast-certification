@@ -48,6 +48,7 @@ public class ProcessTransactionEntryProcessor implements EntryProcessor<String, 
             history.add(transaction);
             RuleEngine re = new RuleEngine(transaction, history);
             re.executeRules();
+            history.remove(transaction);  // this is done only for a test so the size will not grow over time
             transaction.setFraudCheck(new FraudCheck(re.isFraudTxn(), re.getFailedTest()));
             entry.setValue(history); // so Hazelcast will know this is not a read only method
         } catch(Exception x){

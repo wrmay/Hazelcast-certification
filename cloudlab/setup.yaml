@@ -148,7 +148,7 @@
         shell: supervisorctl start prometheus
 
       - name: reload mancenter
-        shell: supervisorctl reload mancenter
+        shell: supervisorctl update mancenter
 
       - name: start mancenter
         shell: supervisorctl start mancenter
