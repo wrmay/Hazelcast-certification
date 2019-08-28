@@ -22,19 +22,21 @@
       <metadata-space-percentage>12.5</metadata-space-percentage>
     </native-memory>
 
+<!--
     <serialization>
       <data-serializable-factories>
         <data-serializable-factory factory-id="1">com.hazelcast.certification.domain.TransactionDataSerializableFactory</data-serializable-factory>
       </data-serializable-factories>
     </serialization>
+-->
 
     <map name="transaction_history">
         <in-memory-format>NATIVE</in-memory-format>
         <map-store enabled="true" initial-mode="EAGER">
             <class-name>com.hazelcast.certification.util.TransactionMapLoader</class-name>
             <properties>
-                <property name="preload.cardCount">30000000</property>
-                <property name="preload.txnCount">20</property>
+                <property name="preload.cardCount">10000000</property>
+                <property name="preload.txnCount">40</property>
             </properties>
         </map-store>
         <statistics-enabled>true</statistics-enabled>
@@ -42,14 +44,6 @@
 
 
     <properties>
-  {% if (private_ip[-3:]|int) % 3 == 0 %}
-        <property name="transaction.server.host">10.0.0.201</property>
-  {% elif (private_ip[-3:]|int) % 3 == 1 %}
-        <property name="transaction.server.host">10.0.0.201</property>
-  {% else %}
-        <property name="transaction.server.host">10.0.0.201</property>
-  {% endif %}
-        <property name="transaction.server.port">8511</property>
         <property name="hazelcast.operation.thread.count">8</property>
 <!--
         <property name="hazelcast.partition.count">2063</property>

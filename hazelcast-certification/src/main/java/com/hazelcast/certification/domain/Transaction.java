@@ -14,7 +14,7 @@ import java.util.Arrays;
  * Object representation of incoming and historical transaction
  *
  */
-public class Transaction implements IdentifiedDataSerializable, Comparable<Transaction> {
+public class Transaction implements Serializable, Comparable<Transaction> {
 
 	private long timeStamp;
 	private int txnAmount;
@@ -128,19 +128,19 @@ public class Transaction implements IdentifiedDataSerializable, Comparable<Trans
 //		return sb.toString();
 //	}
 
-	public void writeData(ObjectDataOutput objectDataOutput) throws IOException {
-		objectDataOutput.writeLong(timeStamp);
-		objectDataOutput.writeInt(txnAmount);
-		objectDataOutput.writeObject(fraudCheck);
-		objectDataOutput.writeByteArray(stringFields);
-	}
-
-	public void readData(ObjectDataInput objectDataInput) throws IOException {
-		timeStamp = objectDataInput.readLong();
-		txnAmount = objectDataInput.readInt();
-		fraudCheck = objectDataInput.readObject();
-		stringFields = objectDataInput.readByteArray();
-	}
+//	public void writeData(ObjectDataOutput objectDataOutput) throws IOException {
+//		objectDataOutput.writeLong(timeStamp);
+//		objectDataOutput.writeInt(txnAmount);
+//		objectDataOutput.writeObject(fraudCheck);
+//		objectDataOutput.writeByteArray(stringFields);
+//	}
+//
+//	public void readData(ObjectDataInput objectDataInput) throws IOException {
+//		timeStamp = objectDataInput.readLong();
+//		txnAmount = objectDataInput.readInt();
+//		fraudCheck = objectDataInput.readObject();
+//		stringFields = objectDataInput.readByteArray();
+//	}
 
 	@Override
 	public int compareTo(Transaction o) {
@@ -171,15 +171,15 @@ public class Transaction implements IdentifiedDataSerializable, Comparable<Trans
 		return result;
 	}
 
-	@Override
-	public int getFactoryId() {
-		return TransactionDataSerializableFactory.FACTORY_ID;
-	}
-
-	@Override
-	public int getId() {
-		return TransactionDataSerializableFactory.TRANSACTION_TYPE;
-	}
-
+//	@Override
+//	public int getFactoryId() {
+//		return TransactionDataSerializableFactory.FACTORY_ID;
+//	}
+//
+//	@Override
+//	public int getId() {
+//		return TransactionDataSerializableFactory.TRANSACTION_TYPE;
+//	}
+//
 
 }

@@ -9,6 +9,7 @@ import com.hazelcast.core.IMap;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 import io.prometheus.client.Counter;
+import io.prometheus.client.Gauge;
 import io.prometheus.client.exporter.HTTPServer;
 
 import java.util.Properties;
@@ -23,10 +24,11 @@ public class FraudDetectionClient extends Thread {
     private static final String TRANSACTION_CLIENT_THREADS_PROP = "transaction.client.threads";
     private static final String TRANSACTION_CLIENT_REQUESTS_IN_FLIGHT = "transaction.client.max_outstanding_requests_per_thread";
 
-    private static final Counter transactionsSubmitted = Counter.build().name("transactions_submitted_total").help("total transactions submitted").register();
-    private static final Counter transactionsSucceeded = Counter.build().name("transactions_succeeded_total").help("total transactions that were submitted and a response was returned").register();
-    private static final Counter transactionsFailed = Counter.build().name("transactions_failed_total").help("total transactions that were submitted but failed").register();
-    private static final Counter transactionsSlow = Counter.build().name("transactions_slow_total").help("total transactions that returned in more than 1 second").register();
+    private static final Counter gets = Counter.build().name("get_successes_total").help("total successful gets").register();
+    private static final Counter misses = Counter.build().name("get_misses_total").help("total gets returning null").register();
+    private static final Counter exceptions = Counter.build().name("get_exceptions_total").help("total gets throwing an exception").register();
+    private static final Gauge latency = Gauge.build().name("get_latency").help("get latency in ms").register();
+
 
 
     private LinkedBlockingQueue<Request> inFlightRequests;
@@ -39,47 +41,38 @@ public class FraudDetectionClient extends Thread {
 
 
     public void run() {
+        long start = System.currentTimeMillis();
+        long elapsed = 0;
+        int count = 0;
         while (true) {
+
             int seq = random.nextInt(cardCount);
             String ccNum = transactionGenerator.generateCreditCardNumber(seq);
-            String transactionString = transactionGenerator.createAndGetCreditCardTransaction(ccNum, seq, true);
-
-            Request request = new Request(transactionString);
             try {
-                inFlightRequests.put(request);  // blocks for back pressure
-            } catch (InterruptedException ix) {
-                log.warning("Unexpected exception.");
+                TransactionHistoryContainer result = txnHistory.get(ccNum);
+                if (result == null) {
+                    misses.inc();
+                }
+                else {
+                    ++count;
+                    gets.inc();
+                }
+            } catch(Exception x){
+                exceptions.inc();
             }
 
-            txnHistory.submitToKey(ccNum, new ProcessTransactionEntryProcessor(transactionString), new TransactionCallback(request));
-            transactionsSubmitted.inc();
+            if (count % 100 == 0){
+                long now = System.currentTimeMillis();
+                elapsed = now  - start;
+                latency.set( ((double) elapsed) / 100.0  );
+                start = now;
+                elapsed = 0;
+            }
+
         }
     }
 
 
-    private class TransactionCallback implements ExecutionCallback<Object> {
-
-        private Request request;
-
-        public TransactionCallback(Request request) {
-            this.request = request;
-        }
-
-        @Override
-        public void onResponse(Object o) {
-            inFlightRequests.remove(request);
-            transactionsSucceeded.inc();
-            long elapsed = System.currentTimeMillis() - request.startTime;
-            if (elapsed > 1000)
-                transactionsSlow.inc();
-        }
-
-        @Override
-        public void onFailure(Throwable throwable) {
-            inFlightRequests.remove(request);
-            transactionsFailed.inc();
-        }
-    }
 
 
     public FraudDetectionClient(HazelcastInstance hz, int maxOutstandingRequests, int cardCount) {

@@ -6,6 +6,7 @@ import com.hazelcast.nio.serialization.IdentifiedDataSerializable;
 import org.joda.time.DateTime;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -18,7 +19,7 @@ import java.util.NoSuchElementException;
  * It is not safe for multiple threads to access the same instance concurrently (doesn't need to  be)
  */
 
-public class TransactionHistoryContainer implements Iterable<Transaction>, IdentifiedDataSerializable {
+public class TransactionHistoryContainer implements Iterable<Transaction>, Serializable {
 
     TransactionHistoryNode lastTransaction;
 
@@ -149,30 +150,30 @@ public class TransactionHistoryContainer implements Iterable<Transaction>, Ident
         return new TransactionHistoryIterator();
     }
 
-    @Override
-    public int getFactoryId() {
-        return TransactionDataSerializableFactory.FACTORY_ID;
-    }
-
-    @Override
-    public int getId() {
-        return TransactionDataSerializableFactory.TRANSACTION_CONTAINER_TYPE;
-    }
-
-    @Override
-    public void writeData(ObjectDataOutput objectDataOutput) throws IOException {
-        objectDataOutput.writeObject(lastTransaction);
-        objectDataOutput.writeInt(daysToKeep);
-        objectDataOutput.writeInt(size);
-
-    }
-
-    @Override
-    public void readData(ObjectDataInput objectDataInput) throws IOException {
-        lastTransaction = objectDataInput.readObject();
-        daysToKeep = objectDataInput.readInt();
-        size = objectDataInput.readInt();
-    }
+//    @Override
+//    public int getFactoryId() {
+//        return TransactionDataSerializableFactory.FACTORY_ID;
+//    }
+//
+//    @Override
+//    public int getId() {
+//        return TransactionDataSerializableFactory.TRANSACTION_CONTAINER_TYPE;
+//    }
+//
+//    @Override
+//    public void writeData(ObjectDataOutput objectDataOutput) throws IOException {
+//        objectDataOutput.writeObject(lastTransaction);
+//        objectDataOutput.writeInt(daysToKeep);
+//        objectDataOutput.writeInt(size);
+//
+//    }
+//
+//    @Override
+//    public void readData(ObjectDataInput objectDataInput) throws IOException {
+//        lastTransaction = objectDataInput.readObject();
+//        daysToKeep = objectDataInput.readInt();
+//        size = objectDataInput.readInt();
+//    }
 
     public class TransactionHistoryIterator implements Iterator<Transaction> {
 

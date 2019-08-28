@@ -14,13 +14,14 @@ public class TransactionDataSerializableFactory  implements DataSerializableFact
 
     @Override
     public IdentifiedDataSerializable create(int typeId) {
-        if (typeId == TRANSACTION_TYPE)
-            return new Transaction();
-        else if (typeId == TRANSACTION_NODE_TYPE)
-            return new TransactionHistoryNode();
-        else if (typeId == TRANSACTION_CONTAINER_TYPE)
-            return new TransactionHistoryContainer();
-        else
-            return null;
+//        if (typeId == TRANSACTION_TYPE)
+//            return new Transaction();
+//        else if (typeId == TRANSACTION_NODE_TYPE)
+//            return new TransactionHistoryNode();
+//        else if (typeId == TRANSACTION_CONTAINER_TYPE)
+//            return new TransactionHistoryContainer();
+//        else
+//            return null;
+        return null;
     }
 }
